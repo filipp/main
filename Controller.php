@@ -199,8 +199,7 @@ class Controller
 			
 			$sql = "SELECT $select FROM `{$parent}` WHERE `{$fkey}` = ?";
 			
-			$stmt = App::db()->prepare($sql);
-			$stmt->execute(array($parent_id));
+      $stmt = DB::query($sql, array($parent_id));
 			$this->data[$i][$parent] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 			
 		}
