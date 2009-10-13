@@ -27,6 +27,9 @@ class Controller
 		return $this;
 	}
 	
+	/**
+	 * Get One Thing
+	 */
 	public function get($id)
 	{
     return $this->find(array('id' => $id));
@@ -38,7 +41,7 @@ class Controller
 	public function find($where = null, $sort = false, $limit = false)
 	{
 		$select = "*"; $q = "";
-		
+    
 		// Allow custom queries
 		if (is_array($where))
 		{
@@ -104,24 +107,23 @@ class Controller
       $sql .= " LIMIT $limit";
 		}
     
-		$stmt = DB::query($sql, $values);
-    
-		$i = 0;
+		$result = DB::query($sql, $values)->fetchAll(PDO::FETCH_ASSOC);
 		
-		foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row)
+		for ($i=0; $i < count($result); $i++)
 		{
+      $row = $result[$i];
 			$this->data[$i] = $row;
 			$this->find_parent($row, $i);
 			$this->find_children($row, $i);
-			$i++;
 		}
-		
+				
 		return $this;
 		
 	}
 	
 	/**
-	 * Return all child rows for this row
+	 * Find all child rows for this row
+	 * @return void
 	 */
 	private function find_children($row, $i)
 	{
@@ -152,9 +154,8 @@ class Controller
 			} else if (@in_array ($table, $ref_schema['belongsTo'])) { // 1/m
 					$sql = "SELECT * FROM `$ref` WHERE `$ref`.`{$table}_id` = ?";
 			}
-			
-			$stmt = App::db()->prepare($sql);
-			$stmt->execute(array($id));
+      
+      $stmt = DB::query($sql, array($id));
 			$this->data[$i][$child] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 			
 		}
@@ -229,7 +230,8 @@ class Controller
 		$insert = "";
 		$values = array();
 		
-		foreach($data as $k => $v) {
+		foreach($data as $k => $v) 
+		{
 			$insert .= "`{$k}`, ";
 			$values[":{$k}"] = $v;
 		}
@@ -237,8 +239,6 @@ class Controller
 		$insert = rtrim($insert, ", ");
 		$val = implode(", ", array_keys($values));
 		$sql = "INSERT INTO `{$this->table}` ({$insert}) VALUES ({$val})";
-		
-		App::log($sql);
     
 		return DB::query($sql, $values);
 		

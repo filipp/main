@@ -25,6 +25,8 @@ class App
 			$controller = "user";
 		}
 		
+		ob_start();
+		
 		// Dispatch correct controller
 		$c = new $controller;
 		
@@ -45,7 +47,9 @@ class App
 			return $c->$action($c);
 		}
 		
-		exit(App::error("{$controller}_{$action}: no such method"));
+    App::error("{$controller}_{$action}: no such method");
+    
+    ob_end_flush();
 		
 	}
 	

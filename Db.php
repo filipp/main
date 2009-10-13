@@ -52,6 +52,7 @@ class Db
   
   /**
    * Execute an SQL query
+   * @return mixed
    */
   public function query($sql, $data = null)
 	{
@@ -91,6 +92,12 @@ class Db
     
     return $data;
   
+  }
+  
+  public function fetch($sql, $data = null)
+  {
+    $stmt = DB::query($sql, $data);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 	
 }
