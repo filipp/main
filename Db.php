@@ -1,7 +1,7 @@
 <?php
 
 /**
- * boeuf/Db.php
+ * main/Db.php
  * @author Filipp Lepalaan <filipp@mekanisti.fi>
  * http://www.php.net/manual/en/language.oop5.patterns.php
  */

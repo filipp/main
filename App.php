@@ -90,15 +90,19 @@ class App
 	static function ok($msg)
 	{
     $ok = array('result' => 'ok', 'msg' => $msg);
-		header("Content-type application/json");
-		return json_encode($ok);
+    $json = json_encode($ok);
+		header("Content-Type: application/json");
+		header("Content-Length: " . strlen($json));
+		print $json;
 	}
 	
 	static function error($msg)
 	{
 		$err = array('result' => 'error', 'msg' => $msg);
-		header("Content-type application/json");
-		return json_encode($err);
+		$json = json_encode($err);
+		header("Content-Type: application/json");
+		header("Content-Length: " . strlen($json));
+		print $json;
 	}
 	
 	/**
