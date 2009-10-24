@@ -12,7 +12,10 @@ class App
 	 * Fire up the application
 	 */
 	static public function init()
-	{	
+	{
+	  // Set custom error handler
+	  set_error_handler("App::error_handler");
+	  
 		@list($controller, $param, $action) = App::url();
 		
 		if (empty($param)) {
@@ -91,22 +94,49 @@ class App
 		
 	}
 	
-	static function ok($msg)
+	static function json($msg)
 	{
-    $ok = array('result' => 'ok', 'msg' => $msg);
-    $json = json_encode($ok);
+	  $json = json_encode($msg);
 		header("Content-Type: application/json");
 		header("Content-Length: " . strlen($json));
 		print $json;
 	}
 	
+	static function ok($msg)
+	{
+    $ok = array('result' => 'ok', 'msg' => $msg);
+    self::json($ok);
+	}
+	
 	static function error($msg)
 	{
-		$err = array('result' => 'error', 'msg' => $msg);
-		$json = json_encode($err);
-		header("Content-Type: application/json");
-		header("Content-Length: " . strlen($json));
-		print $json;
+	  $err = array('result' => 'error', 'msg' => $msg);
+	  self::json($msg);
+	  self::log($msg);
+	}
+  
+  /**
+   * Log an error to our own logging system
+   */
+  static function log($msg)
+	{
+	  if (is_array($msg)) {
+      $msg = print_r($msg, true);
+	  }
+	  $c = self::conf("app.error_log");
+	  $file = realpath(__FILE__."/../../../../data/$c");
+	  if (!$file) {
+	    return false;
+	  }
+	  $fh = fopen($file, "a+");
+	  fwrite($fh, $msg);
+	  fclose($fh);
+	}
+		
+	static function error_handler($errno, $errstr, $errfile, $errline)
+	{
+	  $str = sprintf("%s\t%s\t%s\t%s\n", date("d.m @ H:i:s"), basename($errfile), $errline, $errstr);
+	  self::log($str);
 	}
 	
 	/**
@@ -125,14 +155,6 @@ class App
 		// Set language to whatever the browser is set to
 		list($loc, $lang) = explode("-", $_SERVER['HTTP_ACCEPT_LANGUAGE']);
 		return sprintf("%s_%s", $loc, strtoupper($lang));
-	}
-	
-	static function log($msg)
-	{
-	  if (is_array($msg)) {
-      $msg = print_r($msg, true);
-	  }
-	  syslog(LOG_ERR, $msg);
 	}
   
   public function delete($table, $where)
