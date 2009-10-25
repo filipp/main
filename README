@@ -1,0 +1,37 @@
+MAIN - the simple PHP framework
+
+## Folder structure ##
+
+site:
+  public (this is the DocRoot for your site)
+    index.php
+  system (put all system support files in here)
+    lib
+      main
+    classes (store all your model files in here)
+    views (create a folder for each controller and an action.html file for every view)
+  data (a good place to store all your application data, logs, etc)
+
+## index.php ##
+
+A typical index.php using MAIN would look like this:
+<?php
+
+  $sysdir = realpath(dirname(__FILE__).'/../system');
+  
+  set_include_path(
+  		get_include_path()		. PATH_SEPARATOR
+  		. $sysdir							. PATH_SEPARATOR
+  		. "{$sysdir}/lib"			. PATH_SEPARATOR
+  		. "{$sysdir}/conf" 		. PATH_SEPARATOR
+  		. "{$sysdir}/classes"	. PATH_SEPARATOR
+  	);	
+  
+  require_once "main/app.php";
+  require_once "main/controller.php";
+  $locale = App::locale();
+  setlocale(LC_ALL, $locale);
+  session_start();
+  App::init();
+
+?>
