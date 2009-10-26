@@ -66,19 +66,20 @@ class Db
 	  }
 	  
     try {
-    
+      
       $stmt = self::getInstance()->prepare($sql);
       $result = $stmt->execute($data);
       
       if (!$result) {
-        $e = $stmt->errorInfo();
-        exit(App::error($e[2]));
+        $e = $pdo->errorInfo();
+        $error = $e[2] ."\n" . print_r(debug_backtrace(), true);
+        return App::error($error);
       }
     
     } catch (PDOException $e) {
         $error = $e->getMessage() . $sql;
-        App::log($error);
-        exit(App::error($error));
+        $error .= "\n" . print_r(debug_backtrace(), true);
+        return App::error($error);
     }
     
     // Select statements need the query results
@@ -90,8 +91,8 @@ class Db
       $data['id'] = self::getInstance()->lastInsertId();
     }
     
-    // Always strip ":" prefixes from input array keys
     $out = array();
+    // Always strip ":" prefixes from input array keys
     foreach ($data as $k => $v) {
       $key = ltrim($k, ':');
       $out[$key] = $v;
