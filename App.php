@@ -15,7 +15,9 @@ class App
 	{
 	  // Set custom error handler
 	  set_error_handler("App::error_handler");
-	  
+	  // Set correct timezone
+    date_default_timezone_set(self::conf("app.timezone"));
+    
 		@list($controller, $param, $action) = App::url();
 		
 		if (empty($param)) {
