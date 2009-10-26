@@ -35,6 +35,11 @@ class Controller
     return $this->find(array('id' => $id));
 	}
 	
+	public function db()
+	{
+	  return Db::getInstance();
+	}
+	
 	/**
 	 * The New Find
 	 */
@@ -107,7 +112,7 @@ class Controller
       $sql .= " LIMIT $limit";
 		}
     
-		$result = DB::query($sql, $values)->fetchAll(PDO::FETCH_ASSOC);
+		$result = Db::fetch($sql, $values);
 		
 		for ($i=0; $i < count($result); $i++)
 		{
@@ -292,7 +297,7 @@ class Controller
     
     $sql = "UPDATE `{$this->table}` SET $query WHERE `$col` = :$col";
     
-    return DB::query($sql, $values);
+    return Db::query($sql, $values);
     
   }
 	

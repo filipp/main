@@ -22,8 +22,7 @@ class Db
   {
     $c = App::conf();
 		
-		if (!self::$instance)
-		{
+		if (!self::$instance) {
 		  try {
 			  self::$instance = new PDO(
 			    "{$c['db.driver']}:host={$c['db.host']};dbname={$c['db.name']}",
@@ -47,7 +46,7 @@ class Db
 	 */
   public function __clone()
   {
-    trigger_error("Hello, ich name was Singleton. Cloning is not allowed", E_USER_ERROR);
+    trigger_error("Cloning not work is", E_USER_ERROR);
   }
   
   /**
@@ -72,13 +71,12 @@ class Db
       
       if (!$result) {
         $e = $stmt->errorInfo();
-        exit(App::error($e[2]));
+        App::error($e[2]);
       }
     
     } catch (PDOException $e) {
         $error = $e->getMessage() . $sql;
-        App::log($error);
-        exit(App::error($error));
+        App::error($error);
     }
     
     // Select statements need the query results
@@ -96,7 +94,7 @@ class Db
   
   public function fetch($sql, $data = null)
   {
-    $stmt = DB::query($sql, $data);
+    $stmt = self::query($sql, $data);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 	

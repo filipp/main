@@ -21,8 +21,6 @@ class App
 		if (empty($param)) {
 			$action = "index";
 		}
-    
-//		$conf['basedir'] = dirname(dirname(__FILE__) . "/system");
 		
 		if (!$controller) {
 			$controller = "user";
@@ -81,10 +79,11 @@ class App
 	
 	static function type()
 	{
-		$last = array_pop(explode("/", @$_GET['url']));
+	  $tokens = explode("/", $_SERVER['REQUEST_URI']);
+		$last = array_pop($tokens);
 		$type = ltrim(strrchr($last, "."), ".");
 		
-		$contentTypes = array('html', 'rss', 'xml', 'tpl', 'pdf', 'jpg');
+		$contentTypes = array("html", "rss", "xml", "tpl", "pdf", "jpg");
 
 		if (in_array($type, $contentTypes)) {
 			return $type;
@@ -92,14 +91,6 @@ class App
 		
 		return "html";
 		
-	}
-	
-	static function json($msg)
-	{
-	  $json = json_encode($msg);
-		header("Content-Type: application/json");
-		header("Content-Length: " . strlen($json));
-		print $json;
 	}
 	
 	static function ok($msg)
@@ -114,7 +105,15 @@ class App
 	  self::json($msg);
 	  self::log($msg);
 	}
-  
+
+  static function json($msg)
+	{
+	  $json = json_encode($msg);
+		header("Content-Type: application/json");
+		header("Content-Length: " . strlen($json));
+		print $json;
+	}
+	
   /**
    * Log an error to our own logging system
    */
@@ -123,19 +122,21 @@ class App
 	  if (is_array($msg)) {
       $msg = print_r($msg, true);
 	  }
+	  
 	  $c = self::conf("app.error_log");
 	  $file = realpath(__FILE__."/../../../../data/$c");
 	  if (!$file) {
 	    return false;
 	  }
+	  
 	  $fh = fopen($file, "a+");
-	  fwrite($fh, $msg);
+	  fwrite($fh, trim($msg) . "\n");
 	  fclose($fh);
 	}
 		
 	static function error_handler($errno, $errstr, $errfile, $errline)
 	{
-	  $str = sprintf("%s\t%s\t%s\t%s\n", date("d.m @ H:i:s"), basename($errfile), $errline, $errstr);
+	  $str = sprintf("%s\t%s\t%s\t%s\n", date("d.m H:i:s"), basename($errfile), $errline, $errstr);
 	  self::log($str);
 	}
 	
