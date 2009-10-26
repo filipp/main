@@ -18,8 +18,6 @@ class App
 		if (empty($param)) {
 			$action = "index";
 		}
-    
-//		$conf['basedir'] = dirname(dirname(__FILE__) . "/system");
 		
 		if (!$controller) {
 			$controller = "user";

@@ -90,7 +90,14 @@ class Db
       $data['id'] = self::getInstance()->lastInsertId();
     }
     
-    return $data;
+    // Always strip ":" prefixes from input array keys
+    $out = array();
+    foreach ($data as $k => $v) {
+      $key = ltrim($k, ':');
+      $out[$key] = $v;
+    }
+    
+    return $out;
   
   }
   
