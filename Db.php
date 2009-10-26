@@ -22,7 +22,8 @@ class Db
   {
     $c = App::conf();
 		
-		if (!self::$instance) {
+		if (!self::$instance)
+		{
 		  try {
 			  self::$instance = new PDO(
 			    "{$c['db.driver']}:host={$c['db.host']};dbname={$c['db.name']}",
@@ -65,18 +66,20 @@ class Db
 	  }
 	  
     try {
-    
+      
       $stmt = self::getInstance()->prepare($sql);
       $result = $stmt->execute($data);
       
       if (!$result) {
-        $e = $stmt->errorInfo();
-        App::error($e[2]);
+        $e = $pdo->errorInfo();
+        $error = $e[2] ."\n" . print_r(debug_backtrace(), true);
+        return App::error($error);
       }
     
     } catch (PDOException $e) {
         $error = $e->getMessage() . $sql;
-        App::error($error);
+        $error .= "\n" . print_r(debug_backtrace(), true);
+        return App::error($error);
     }
     
     // Select statements need the query results
@@ -88,7 +91,14 @@ class Db
       $data['id'] = self::getInstance()->lastInsertId();
     }
     
-    return $data;
+    $out = array();
+    // Always strip ":" prefixes from input array keys
+    foreach ($data as $k => $v) {
+      $key = ltrim($k, ':');
+      $out[$key] = $v;
+    }
+    
+    return $out;
   
   }
   

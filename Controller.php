@@ -229,7 +229,7 @@ class Controller
 	  
 		if (empty($data)) {
 		  App::log("Attempted to insert empty data");
-      exit(App::error("Insert failed - nothing to insert"));
+      return App::error("Nothing to insert");
 		}
 		
 		$insert = "";
@@ -278,7 +278,7 @@ class Controller
 		}
 		
     if (empty($data)) {
-      exit(self::error("Update with empty parameters"));
+      return App::error("Update with empty parameters");
     }
     
     if (empty($where)) {
@@ -325,7 +325,7 @@ class Controller
 		$file = "../system/views/{$this->table}/{$view}.{$type}";
 		
 		if (!is_file($file)) {
-			exit(App::error("{$this->table}_{$view}_{$type}: no such view"));
+			return App::error("{$this->table}_{$view}_{$type}: no such view");
 		}
 		
 		if ($data) {

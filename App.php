@@ -102,7 +102,9 @@ class App
 	static function error($msg)
 	{
 	  $err = array('result' => 'error', 'msg' => $msg);
+	  // Send error to client
 	  self::json($msg);
+	  // And log it locally
 	  self::log($msg);
 	}
 
@@ -124,7 +126,13 @@ class App
 	  }
 	  
 	  $c = self::conf("app.error_log");
+	  
+	  if (!$c) {
+	    return false;
+	  }
+	  
 	  $file = realpath(__FILE__."/../../../../data/$c");
+	  
 	  if (!$file) {
 	    return false;
 	  }
@@ -133,7 +141,10 @@ class App
 	  fwrite($fh, trim($msg) . "\n");
 	  fclose($fh);
 	}
-		
+	
+	/**
+	 * Set our own PHP error handler
+	 */	
 	static function error_handler($errno, $errstr, $errfile, $errline)
 	{
 	  $str = sprintf("%s\t%s\t%s\t%s\n", date("d.m H:i:s"), basename($errfile), $errline, $errstr);
