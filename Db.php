@@ -69,7 +69,7 @@ class Db
     
       $stmt = self::getInstance()->prepare($sql);
       $result = $stmt->execute($data);
-  
+      
       if (!$result) {
         $e = $stmt->errorInfo();
         exit(App::error($e[2]));
