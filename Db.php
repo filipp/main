@@ -67,12 +67,13 @@ class Db
 	  
     try {
       
-      $stmt = self::getInstance()->prepare($sql);
+      $pdo = self::getInstance();
+      $stmt = $pdo->prepare($sql);
       $result = $stmt->execute($data);
       
       if (!$result) {
-        $e = $pdo->errorInfo();
-        $error = $e[2] ."\n" . print_r(debug_backtrace(), true);
+        list($ec, $dec, $emsg) = $pdo->errorInfo();
+        $error = $emsg ."\n" . print_r(debug_backtrace(), true);
         return App::error($error);
       }
     
@@ -88,10 +89,11 @@ class Db
     }
     
     if (empty($data['id'])) {
-      $data['id'] = self::getInstance()->lastInsertId();
+      $data['id'] = $pdo->lastInsertId();
     }
     
     $out = array();
+    
     // Always strip ":" prefixes from input array keys
     foreach ($data as $k => $v) {
       $key = ltrim($k, ':');
