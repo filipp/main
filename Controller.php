@@ -107,7 +107,7 @@ class Controller
       $sql .= " LIMIT $limit";
 		}
     
-		$result = DB::query($sql, $values)->fetchAll(PDO::FETCH_ASSOC);
+		$result = DB::fetch($sql, $values);
 		
 		for ($i=0; $i < count($result); $i++)
 		{
@@ -216,14 +216,9 @@ class Controller
 	 * Insert this thing in the DB and return inserted
 	 * thing
 	 */
-	public function insert($data = null)
+	public function insert()
 	{
-	  if (!$data) {
-      $data = $_POST;
-	  }
-	  
 		if (empty($data)) {
-		  App::log("Attempted to insert empty data");
       return App::error("Nothing to insert");
 		}
 		
@@ -247,17 +242,16 @@ class Controller
 	/**
 	 * Delete this thing
 	 */
-	public function delete()
+	protected function delete($where)
 	{
-		if (empty($_POST)) {
-			exit(App::error("Delete without arguments"));
+		if (empty($where)) {
+      return App::error("Delete without arguments");
 		}
 		
-		list($key, $value) = each($_POST);
+		list($key, $value) = each($where);
     
 		$sql = "DELETE FROM `{$this->table}` WHERE `{$key}` = ?";
-    
-		return DB::query($sql, $value);
+		return Db::query($sql, array($value));
 		
 	}
 	
@@ -266,13 +260,9 @@ class Controller
    * We keep this in the Controller since it might know
    * more about the topmost class
    */ 
-	public function update($data = null, $where = null)
+	public function update($data, $where = null)
   {
-    if (!$data) {
-      $data = $_POST;
-		}
-		
-    if (empty($data)) {
+    if (!is_array($data)) {
       return App::error("Update with empty parameters");
     }
     

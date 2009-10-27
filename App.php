@@ -138,8 +138,9 @@ class App
 	    return false;
 	  }
 	  
+	  $msg = trim($msg);
 	  $fh = fopen($file, "a+");
-	  fwrite($fh, $msg);
+	  fwrite($fh, "$msg\n");
 	  fclose($fh);
 	}
 	
