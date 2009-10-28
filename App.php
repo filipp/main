@@ -139,9 +139,11 @@ class App
 	    return false;
 	  }
 	  
+	  $msg = trim($msg);
 	  $fh = fopen($file, "a+");
 	  fwrite($fh, trim($msg) . "\n");
 	  fclose($fh);
+	  
 	}
 	
 	/**

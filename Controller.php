@@ -221,14 +221,9 @@ class Controller
 	 * Insert this thing in the DB and return inserted
 	 * thing
 	 */
-	public function insert($data = null)
+	public function insert($data)
 	{
-	  if (!$data) {
-      $data = $_POST;
-	  }
-	  
 		if (empty($data)) {
-		  App::log("Attempted to insert empty data");
       return App::error("Nothing to insert");
 		}
 		
@@ -252,17 +247,17 @@ class Controller
 	/**
 	 * Delete this thing
 	 */
-	public function delete()
+	protected function delete($where)
 	{
-		if (empty($_POST)) {
-			exit(App::error("Delete without arguments"));
+		if (empty($where)) {
+      return App::error("Delete without arguments");
 		}
 		
-		list($key, $value) = each($_POST);
+		list($key, $value) = each($where);
+    $data = array(":{$key}" => $value);
+		$sql = "DELETE FROM `{$this->table}` WHERE `{$key}` = :{$key}";
     
-		$sql = "DELETE FROM `{$this->table}` WHERE `{$key}` = ?";
-    
-		return DB::query($sql, $value);
+		return Db::query($sql, $data);
 		
 	}
 	
@@ -271,13 +266,9 @@ class Controller
    * We keep this in the Controller since it might know
    * more about the topmost class
    */ 
-	public function update($data = null, $where = null)
+	protected function update($data, $where = null)
   {
-    if (!$data) {
-      $data = $_POST;
-		}
-		
-    if (empty($data)) {
+    if (!is_array($data)) {
       return App::error("Update with empty parameters");
     }
     

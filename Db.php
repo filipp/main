@@ -54,7 +54,7 @@ class Db
    * Execute an SQL query
    * @return mixed
    */
-  public function query($sql, $data = null)
+  public static function query($sql, $data = null)
 	{
 	  if (!$data) {
       $data = array();
@@ -104,7 +104,7 @@ class Db
   
   }
   
-  public function fetch($sql, $data = null)
+  public static function fetch($sql, $data = null)
   {
     $stmt = self::query($sql, $data);
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
