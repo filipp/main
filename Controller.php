@@ -216,7 +216,7 @@ class Controller
 	 * Insert this thing in the DB and return inserted
 	 * thing
 	 */
-	public function insert()
+	public function insert($data)
 	{
 		if (empty($data)) {
       return App::error("Nothing to insert");
@@ -249,9 +249,10 @@ class Controller
 		}
 		
 		list($key, $value) = each($where);
+    $data = array(":{$key}" => $value);
+		$sql = "DELETE FROM `{$this->table}` WHERE `{$key}` = :{$key}";
     
-		$sql = "DELETE FROM `{$this->table}` WHERE `{$key}` = ?";
-		return Db::query($sql, array($value));
+		return Db::query($sql, $data);
 		
 	}
 	
@@ -260,7 +261,7 @@ class Controller
    * We keep this in the Controller since it might know
    * more about the topmost class
    */ 
-	public function update($data, $where = null)
+	protected function update($data, $where = null)
   {
     if (!is_array($data)) {
       return App::error("Update with empty parameters");

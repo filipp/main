@@ -142,6 +142,7 @@ class App
 	  $fh = fopen($file, "a+");
 	  fwrite($fh, "$msg\n");
 	  fclose($fh);
+	  
 	}
 	
 	/**
