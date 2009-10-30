@@ -19,11 +19,14 @@ class Controller
   const TableName = "";
   const TableSelect = "";
   
-	function __construct()
+	function __construct($id = null)
 	{
 	  // Child classes should always have the same name as their tables
 		$this->table = strtolower(get_class($this));
 		$this->result = null;
+		if ($id) {
+		  return $this->get($id);
+		}
 		return $this;
 	}
 	
@@ -254,6 +257,7 @@ class Controller
 		}
 		
 		list($key, $value) = each($where);
+		
     $data = array(":{$key}" => $value);
 		$sql = "DELETE FROM `{$this->table}` WHERE `{$key}` = :{$key}";
     

@@ -4,6 +4,7 @@ MAIN - the simple PHP framework
 
 site:
   public (this is the DocRoot for your site)
+    .htaccess (see .htaccess)
     index.php
   system (put all system support files in here)
     lib
@@ -25,7 +26,7 @@ A typical index.php using MAIN would look like this:
   		. "{$sysdir}/lib"			. PATH_SEPARATOR
   		. "{$sysdir}/conf" 		. PATH_SEPARATOR
   		. "{$sysdir}/classes"	. PATH_SEPARATOR
-  	);	
+  	);
   
   require_once "main/app.php";
   require_once "main/controller.php";
@@ -35,3 +36,17 @@ A typical index.php using MAIN would look like this:
   App::init();
 
 ?>
+
+## .htaccess ##
+
+Main uses and is developed on using Apache httpd's mod_rewrite module. The .htaccess file in your web app's
+public root folder should look something like this:
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteCond %{REQUEST_FILENAME} -s [OR]
+  RewriteCond %{REQUEST_FILENAME} -l [OR]
+  RewriteCond %{REQUEST_FILENAME} -d
+  RewriteRule ^.*$ - [NC,L]
+  RewriteRule ^.*$ index.php [NC,L]
+</IfModule>

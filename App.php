@@ -151,8 +151,14 @@ class App
 	 */	
 	static function error_handler($errno, $errstr, $errfile, $errline)
 	{
-	  $str = sprintf("%s\t%s\t%s\t%s\n", date("d.m H:i:s"), basename($errfile), $errline, $errstr);
+	  $str = sprintf(
+	    "%s\t%s\t%s\t%s\n",
+	    date("d.m H:i:s"),
+	    basename($errfile), $errline, $errstr
+	  );
+	
 	  self::log($str);
+	
 	}
 	
 	/**
@@ -257,7 +263,8 @@ class App
 	
 	public function js($string)
 	{
-    return '<script type="text/javascript" charset="utf-8">
+	  header("Content-Type: text/javascript");
+    print '<script type="text/javascript" charset="utf-8">
       ' . $string . '
     </script>';
 	}
