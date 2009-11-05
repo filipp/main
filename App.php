@@ -263,6 +263,25 @@ class App
 		return $out;
 	
 	}
+
+  /**
+   * Prompt for HTTP authentication
+   * @param string [$callback] Function that makes the actual authentication
+   * @param string [$realm] Realm name
+   * @return mixed false if cancelled or output of $function
+   */
+	static function auth($callback, $realm = "Default")
+	{
+  	if (!isset($_SERVER['PHP_AUTH_USER']))
+  	{
+  	  $header = sprintf('WWW-Authenticate: Basic realm="%s"', $realm)
+  		header($header);
+  		header("HTTP/1.0 401 Unauthorized");
+  		return false;
+  	} else {
+  		return call_user_func($callback, $_SERVER['PHP_AUTH_USER'], $_SERVER['PHP_AUTH_PW']);
+  	}
+	}
 	
 	public function js($string)
 	{
