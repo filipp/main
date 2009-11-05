@@ -25,7 +25,8 @@ class App
 		}
 		
 		if (!$controller) {
-			$controller = "user";
+		  $dc = self::conf("defaults.route");
+			$controller = $dc;
 		}
 		
 		ob_start();
@@ -76,6 +77,9 @@ class App
 	  $cpath = realpath("../system/config.ini");
     $config = parse_ini_file($cpath, true);
     $config = $config['development'];
+    if ($key && ! $config[$key]) {
+      return self::error("No such config key: $key");
+    }
 		return ($key) ? $config[$key] : $config;
 	}
 	
