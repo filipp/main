@@ -21,12 +21,11 @@ class App
 		@list($controller, $param, $action) = App::url();
 		
 		if (empty($param)) {
-			$action = "index";
+			$controller = self::conf("defaults.action");
 		}
 		
 		if (!$controller) {
-		  $dc = self::conf("defaults.route");
-			$controller = $dc;
+		  $controller = self::conf("defaults.controller");
 		}
 		
 		ob_start();
