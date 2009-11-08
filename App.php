@@ -20,10 +20,12 @@ class App
     
 		@list($controller, $param, $action) = App::url();
 		
+		// No action given, read default one
 		if (empty($param)) {
-			$controller = self::conf("defaults.action");
+			$action = self::conf("defaults.action");
 		}
 		
+		// No controller given, read default one
 		if (!$controller) {
 		  $controller = self::conf("defaults.controller");
 		}
@@ -56,21 +58,33 @@ class App
 		
 	}
 	
+	/**
+	 * Requests should always be in the form: controller/action/parameters.type
+   * Strip type info since it's not needed at this point
+   */
+	static function url($index = null)
+	{
+	  $url = parse_url($_SERVER['REQUEST_URI']);
+	  if ($index == "query") {
+      return $url['query'];
+	  }
+	  $req = ltrim($url['path'], "/");
+		$array = explode("/", preg_replace('/\.\w+$/', '', $req));
+		return (is_numeric($index)) ? $array[$index] : $array;
+	}
+	
+	/**
+	 * 
+	 */
 	static function param()
 	{
 		$url = App::url();
 		return $url[1];
 	}
 	
-	// Requests should always be in the form: controller/action/parameters.type
-	// Strip type info since it's not needed at this point
-	static function url($index = null)
-	{
-	  $req = ltrim($_SERVER['REQUEST_URI'], "/");
-		$array = explode("/", preg_replace('/\.\w+$/', '', $req));
-		return (is_numeric($index)) ? $array[$index] : $array;
-	}
-	
+	/**
+	 * Return configuration data from ini file
+	 */
 	static function conf($key = null)
 	{
 	  $cpath = realpath("../system/config.ini");
@@ -89,7 +103,7 @@ class App
 		$type = ltrim(strrchr($last, "."), ".");
 		
 		$contentTypes = array("html", "rss", "xml", "tpl", "pdf", "jpg");
-
+    
 		if (in_array($type, $contentTypes)) {
 			return $type;
 		}
@@ -110,14 +124,14 @@ class App
 	  // Send error to client
 	  self::json($msg);
 	  // And log it locally
-	  self::log($msg);
+    self::log($msg);
 	}
 
   static function json($msg)
 	{
 	  $json = json_encode($msg);
 		header("Content-Type: application/json");
-		header("Content-Length: " . strlen($json));
+		header("Content-Length: " . mb_strlen($json));
 		print $json;
 	}
 	
@@ -130,15 +144,9 @@ class App
       $msg = print_r($msg, true);
 	  }
 	  
-	  $c = self::conf("app.error_log");
-	  
-	  if (!$c) {
-	    return false;
-	  }
-	  
-	  $file = realpath(__FILE__."/../../../../data/$c");
-	  
-	  if (!$file) {
+	  $file = self::conf("app.error_log");
+    
+	  if (!is_file($file)) {
 	    return false;
 	  }
 	  
@@ -175,8 +183,14 @@ class App
 		header("Location: $url");
 	}
 	
+	/**
+	 * Determine locale from USER_AGENT
+	 */
 	static function locale()
 	{
+	  if (!isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
+      return false;
+	  }
 		// Set language to whatever the browser is set to
 		list($loc, $lang) = explode("-", $_SERVER['HTTP_ACCEPT_LANGUAGE']);
 		return sprintf("%s_%s", $loc, strtoupper($lang));
@@ -274,8 +288,7 @@ class App
 	{
   	if (!isset($_SERVER['PHP_AUTH_USER']))
   	{
-  	  $header = sprintf('WWW-Authenticate: Basic realm="%s"', $realm)
-  		header($header);
+  		header(sprintf('WWW-Authenticate: Basic realm="%s"', $realm));
   		header("HTTP/1.0 401 Unauthorized");
   		return false;
   	} else {

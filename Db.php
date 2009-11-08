@@ -84,7 +84,7 @@ class Db
     }
     
     // Select statements need the query results
-    if (preg_match('/^select/i', $sql)) {
+    if (preg_match('/^SELECT/i', $sql)) {
       return $stmt;
     }
     
@@ -104,6 +104,9 @@ class Db
   
   }
   
+  /**
+   *
+   */
   public static function fetch($sql, $data = null)
   {
     $stmt = self::query($sql, $data);

@@ -14,15 +14,19 @@ class Controller
   
   const OrderBy = "";
   const HasMany = "";
+  const TableName = "";
   const ManyToMany = "";
   const ForeignKey = "";
-  const TableName = "";
   const TableSelect = "";
   
 	function __construct($id = null)
 	{
 	  // Child classes should always have the same name as their tables
-		$this->table = strtolower(get_class($this));
+	  $this->class = get_class($this);
+    $this->table = eval("return {$this->class}::TableName;");
+    if (!$this->table) {
+      $this->table = strtolower($this->class);
+    }
 		$this->result = null;
 		if ($id) {
 		  return $this->get($id);
@@ -88,10 +92,10 @@ class Controller
 //		$this->schema = $schema[$this->table];
 		
 		// Ugly hack until PHP 5.3
-    $i_sort = eval("return {$this->table}::OrderBy;");
-    $i_fk = eval("return {$this->table}::ForeignKey;");
-    $i_mtm = eval("return {$this->table}::ManyToMany;");
-    $i_select = eval("return {$this->table}::TableSelect;");
+    $i_sort = eval("return {$this->class}::OrderBy;");
+    $i_fk = eval("return {$this->class}::ForeignKey;");
+    $i_mtm = eval("return {$this->class}::ManyToMany;");
+    $i_select = eval("return {$this->class}::TableSelect;");
     
 //		$orderBy = ($sort) ? $sort : 
 		
@@ -122,7 +126,7 @@ class Controller
       $row = $result[$i];
 			$this->data[$i] = $row;
 			$this->find_parent($row, $i);
-			$this->find_children($row, $i);
+//			$this->find_children($row, $i);
 		}
 				
 		return $this;
@@ -136,7 +140,7 @@ class Controller
 	private function find_children($row, $i)
 	{
 		$id = $row['id']; // ID of the parent
-		$fk = explode(",", eval("return $this->table::HasMany;"));
+		$fk = explode(",", eval("return $this->class::HasMany;"));
 		
 		if (empty($fk[0])) {
       return false;
@@ -175,7 +179,7 @@ class Controller
 	private function find_parent($row, $i)
 	{
 		$select = "*";
-		$fk = explode(",", eval("return {$this->table}::ForeignKey;"));
+		$fk = explode(",", eval("return {$this->class}::ForeignKey;"));
     
     // No parents defined
     if (empty($fk[0])) {
