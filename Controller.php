@@ -254,7 +254,7 @@ class Controller
 	/**
 	 * Delete this thing
 	 */
-	protected function delete($where)
+	protected function delete($where, $limit = "")
 	{
 		if (empty($where)) {
       return App::error("Delete without arguments");
@@ -262,8 +262,12 @@ class Controller
 		
 		list($key, $value) = each($where);
 		
+		if ($limit) {
+      $limit = " LIMIT $limit";
+		}
+		
     $data = array(":{$key}" => $value);
-		$sql = "DELETE FROM `{$this->table}` WHERE `{$key}` = :{$key}";
+		$sql = "DELETE FROM `{$this->table}` WHERE `{$key}` = :{$key} $limit";
     
 		return Db::query($sql, $data);
 		
