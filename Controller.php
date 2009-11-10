@@ -31,7 +31,10 @@ class Controller
 		if ($id) {
 		  return $this->get($id);
 		}
+		
+		$this->view = new MainView();
 		return $this;
+		
 	}
 	
 	/**
@@ -349,8 +352,9 @@ class Controller
 	  $tpl_contents = ob_get_contents();
 	  ob_end_clean();
 	  
+	  $title = ($this->pageTitle) ? $this->pageTitle : App::conf("defaults.title");
 	  $tpl_contents = preg_replace(
-	    '/<title>.*?<\/title>/', "<title>{$this->pageTitle}</title>", $tpl_contents
+	    '/<title>.*?<\/title>/', "<title>{$title}</title>", $tpl_contents
 	  );
 	  
 		echo str_replace('%%page_content%%', $view_contents, $tpl_contents);

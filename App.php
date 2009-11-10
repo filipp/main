@@ -121,8 +121,6 @@ class App
 	static function error($msg)
 	{
 	  $err = array('result' => 'error', 'msg' => $msg);
-	  // Send error to client
-	  self::json($msg);
 	  // And log it locally
     self::log($msg);
 	}

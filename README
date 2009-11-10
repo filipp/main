@@ -15,11 +15,11 @@ site:
 
 ## index.php ##
 
-A typical index.php using MAIN would look like this:
+A typical index.php using Main would look like this:
 <?php
 
   $sysdir = realpath(dirname(__FILE__).'/../system');
-  
+  np
   set_include_path(
   		get_include_path()		. PATH_SEPARATOR
   		. $sysdir							. PATH_SEPARATOR
