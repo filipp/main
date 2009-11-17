@@ -24,15 +24,20 @@ class Controller
 	  // Child classes should always have the same name as their tables
 	  $this->class = get_class($this);
     $this->table = eval("return {$this->class}::TableName;");
+    
+    $this->view = new MainView();
+    
+    // Table name not defined, default to class name
     if (!$this->table) {
       $this->table = strtolower($this->class);
     }
+    
 		$this->result = null;
+		
 		if ($id) {
 		  return $this->get($id);
 		}
 		
-		$this->view = new MainView();
 		return $this;
 		
 	}
@@ -40,9 +45,15 @@ class Controller
 	/**
 	 * Get One Thing
 	 */
-	public function get($id)
+	public function get($where)
 	{
-    return $this->find(array('id' => $id));
+	  if (!is_array($where)) {
+	    $where = array('id' => $where);
+	  }
+	  
+    $this->find($where);
+    return current($this->data);
+	
 	}
 	
 	public function db()
@@ -292,6 +303,7 @@ class Controller
     }
     
     $query = ""; $values = array();
+    $data = array_merge($data, $where);
     
     foreach ($data as $k => $v) {
       $query .= "`$k` = :$k, ";
@@ -372,6 +384,21 @@ class Controller
     
 	  return App::db()->query($sql);
 	
+  }
+  
+  /**
+   * Insert or update
+   */
+  public function upsert($data, $where = null)
+  {
+    if(!$this->get($where)) {
+      $out = $this->insert($data);
+    } else {
+      $out = $this->update($data, $where);
+    }
+    
+    return $out;
+    
   }
 	
 }

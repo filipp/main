@@ -175,8 +175,12 @@ class App
 	 * @param string [$where] URL to redirect to
 	 * @return void
 	 */
-	static function redirect($url)
+	static function redirect($url = null)
 	{
+	  if (!$url) {
+	    // Is it smart to redirect back to the page which redirected here?
+	    $url = $_SERVER['HTTP_REFERER'];
+	  }
 		header("HTTP/1.1 303 See Other");
 		header("Location: $url");
 	}

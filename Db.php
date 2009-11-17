@@ -109,7 +109,8 @@ class Db
    */
   public static function fetch($sql, $data = null)
   {
-    $stmt = self::query($sql, $data);
+    $stmt = self::query($sql, $data)
+      or exit(App::error("Error executing query $sql"));
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 	
