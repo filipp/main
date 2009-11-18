@@ -89,7 +89,7 @@ class Controller
 				}
 				
 	      $tmp = (empty($q)) ? ' WHERE ' : ' AND ';
-	      $q .= $tmp . $col . ' ' . $op . ' ?';
+	      $q .= $tmp . "`{$col}`" . ' ' . $op . ' ?';
 	      
 	    }
 	  } else {
@@ -303,7 +303,11 @@ class Controller
     }
     
     $query = ""; $values = array();
-    $data = array_merge($data, $where);
+    list($col, $val) = each($where);
+    
+    if (!isset($data[$col])) {
+      $data = array_merge($data, $where);
+    }
     
     foreach ($data as $k => $v) {
       $query .= "`$k` = :$k, ";
@@ -311,8 +315,6 @@ class Controller
     }
     
     $query = rtrim($query, ", ");
-    list($col, $val) = each($where);
-    
     $sql = "UPDATE `{$this->table}` SET $query WHERE `$col` = :$col";
     
     return Db::query($sql, $values);
