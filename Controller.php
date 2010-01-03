@@ -135,6 +135,11 @@ class Controller
     
 		$result = Db::fetch($sql, $values);
 		
+		if (empty($result)) {
+		  $this->data = false;
+		  return;
+		}
+		
 		for ($i=0; $i < count($result); $i++)
 		{
       $row = $result[$i];
@@ -341,7 +346,9 @@ class Controller
 		}
 		
 		$type = App::type();
-		$template = "../system/views/default.{$type}";
+		// @very temporary hack?
+		$tpl = (App::url(0) == "admin") ? "admin" : "default";
+		$template = "../system/views/{$tpl}.{$type}";
 		$file = "../system/views/{$this->table}/{$view}.{$type}";
 		
 		if (!is_file($file)) {
@@ -398,7 +405,7 @@ class Controller
     } else {
       $out = $this->update($data, $where);
     }
-    
+//    App::log($out);
     return $out;
     
   }
