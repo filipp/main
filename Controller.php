@@ -207,7 +207,7 @@ class Controller
 		
 		foreach ($fk as $parent)
 		{
-			$fkey = "id";
+			$fkey = 'id';
 			$lkey = "{$parent}_id";
 	/*
 			if ($this->schema['foreignKey'][$parent])
@@ -245,15 +245,15 @@ class Controller
 	
 	/**
 	 * Insert this thing in the DB and return inserted
-	 * thing
+	 * Thing
 	 */
 	public function insert($data)
 	{
 		if (empty($data)) {
-      return App::error("Nothing to insert");
+      return App::error('Cannot insert emptiness');
 		}
 		
-		$insert = "";
+		$insert = '';
 		$values = array();
 		
 		foreach($data as $k => $v) 
@@ -262,8 +262,8 @@ class Controller
 			$values[":{$k}"] = $v;
 		}
 		
-		$insert = rtrim($insert, ", ");
-		$val = implode(", ", array_keys($values));
+		$insert = rtrim($insert, ', ');
+		$val = implode(', ', array_keys($values));
 		$sql = "INSERT INTO `{$this->table}` ({$insert}) VALUES ({$val})";
     
 		return DB::query($sql, $values);
@@ -271,12 +271,12 @@ class Controller
 	}
 	
 	/**
-	 * Delete this thing
+	 * Delete This Thing
 	 */
-	protected function delete($where, $limit = "")
+	protected function delete($where, $limit = '')
 	{
 		if (empty($where)) {
-      return App::error("Delete without arguments");
+      return App::error('Cannot delete without arguments');
 		}
 		
 		list($key, $value) = each($where);
@@ -293,14 +293,14 @@ class Controller
 	}
 	
   /**
-   * Update this thing
+   * Update this Thing
    * We keep this in the Controller since it might know
    * more about the topmost class
    */ 
 	protected function update($data, $where = null)
   {
     if (!is_array($data)) {
-      return App::error("Update with empty parameters");
+      return App::error('Cannot update without parameters');
     }
     
     if (empty($where)) {
