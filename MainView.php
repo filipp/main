@@ -1,9 +1,8 @@
 <?php
-/**
- * main/MainView.php
- * @created 31.10.2009
- * @author Filipp Lepalaan <filipp@mac.com>
- */
+////
+// main/MainView.php
+// @created 31.10.2009
+// @author Filipp Lepalaan <filipp@mac.com>
 class MainView
 {
   /**

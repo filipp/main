@@ -1,12 +1,9 @@
 <?php
-
-/**
- * main/Db.php
- * @author Filipp Lepalaan <filipp@mekanisti.fi>
- * http://www.php.net/manual/en/language.oop5.patterns.php
- */
-
-class Db
+////
+// main/MainDb.php
+// @author Filipp Lepalaan <filipp@mekanisti.fi>
+// http://www.php.net/manual/en/language.oop5.patterns.php
+class MainDb
 { 
   private static $instance = NULL;
   

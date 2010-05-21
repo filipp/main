@@ -1,33 +1,27 @@
 <?php
 ////
-// main/App.php
+// main/MainApp.php
 // @author Filipp Lepalaan <filipp@mekanisti.fi>
 // @copyright (c) 2009 Filipp Lepalaan
-class App
+class MainApp
 {
   ////
   // Fire up the application
 	static public function init()
-	{
-	  self::log($_SERVER);
-	  // Set custom error handler
-	  set_error_handler('App::error_handler');
-	  // Set correct timezone
-    date_default_timezone_set(self::conf('app.timezone'));
-    
+	{ 
 		@list($controller, $param, $action) = App::url();
 		
-		// No action given, read default one
+		// no action given, read default one
 		if (empty($param)) {
 			$action = self::conf('defaults.action');
 		}
 		
-		// No controller given, read default one
+		// no controller given, read default one
 		if (!$controller) {
 		  $controller = self::conf('defaults.controller');
 		}
 		
-		// Fire up the output buffer
+		// fire up the output buffer
 		ob_start();
 		
 		// Dispatch correct controller
@@ -62,6 +56,7 @@ class App
 	static function url($index = null)
 	{
 	  $url = parse_url($_SERVER['REQUEST_URI']);
+	  
 	  if ($index == 'query') {
       return $url['query'];
 	  }
@@ -70,9 +65,8 @@ class App
 		return (is_numeric($index)) ? $array[$index] : $array;
 	}
 	
-	/**
-	 * 
-	 */
+  ////
+  // return parameter part of URL
 	static function param()
 	{
 		$url = App::url();
@@ -80,21 +74,29 @@ class App
 	}
 	
   ////
-  // Return configuration data from ini file
-	static function conf($key = null)
+  // get configuration data from ini file
+	static function conf($key = NULL)
 	{
 	  $cpath = realpath('../system/config.ini');
+    
+	  if (!file_exists($cpath)) {
+      trigger_error('Failed to open config file', E_USER_ERROR);
+      exit();
+	  }
+	  
     $config = parse_ini_file($cpath, true);
     $config = $config['development'];
     
     if ($key && ! $config[$key]) {
-      return self::error("No such config key: $key");
+      return self::error('No such config key: '.$key);
     }
     
 		return ($key) ? $config[$key] : $config;
 	
 	}
 	
+	////
+	// determine template type of request
 	static function type()
 	{
 	  $tokens = explode('/', $_SERVER['REQUEST_URI']);
@@ -133,7 +135,7 @@ class App
 	}
 	
   ////
-  // Log an error to our own logging system
+  // log an error to our own logging system
   static function log($msg)
 	{
 	  if (is_array($msg)) {
@@ -154,19 +156,7 @@ class App
 	}
 	
   ////
-  // Set our own PHP error handler	
-	static function error_handler($errno, $errstr, $errfile, $errline)
-	{
-	  $str = sprintf("%s\t%s\t%s\t%s\n", date('d.m H:i:s'),
-	    basename($errfile), $errline, $errstr
-	  );
-	
-	  self::log($str);
-	
-	}
-	
-  ////
-  // Do a proper HTTP redirect
+  // do a proper HTTP redirect
   // @param string [$where] URL to redirect to
   // @return void
 	static function redirect($url = null)
@@ -180,11 +170,11 @@ class App
 	}
 	
   ////
-  // Determine locale from USER_AGENT
+  // determine locale from USER_AGENT
 	static function locale()
 	{
 	  if (!isset($_SERVER['HTTP_ACCEPT_LANGUAGE'])) {
-      return false;
+      return NULL;
 	  }
 		// Set language to whatever the browser is set to
 		list($loc, $lang) = explode('-', $_SERVER['HTTP_ACCEPT_LANGUAGE']);
@@ -206,7 +196,7 @@ class App
   }
   
   ////
-  // Insert something in the database
+  // insert something in the database
   static function insert($table, $data)
   {
     if (empty($data)) {
@@ -235,7 +225,7 @@ class App
 	{
 	  $out = array();
 	  
-	  $query = "?";
+	  $query = '?';
 	  $values = array(1);
 	  
 	  if (is_array($where)) {
@@ -264,7 +254,7 @@ class App
 		  $out[] = $row;
 		}
 		
-		if (count($out) == 1 && $what != "*") {
+		if (count($out) == 1 && $what != '*') {
       return $out[0][$what];
 		}
 		

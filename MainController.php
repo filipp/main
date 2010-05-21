@@ -1,16 +1,12 @@
 <?php
-
-/**
- * main/Controller.php
- * "VC" version of Beof
- * @TODO: transfer boeuf.php here
- */
-
-class Controller
+////
+// main/MainController.php
+// @TODO: transfer boeuf.php here
+class MainController
 {
   public $view;                   // Where to store the data to be rendered
-  public $pageTitle = "";         // Title of the rendered page
-  public $defaultAction = "";     // Method to run when none specified
+  public $pageTitle = '';         // Title of the rendered page
+  public $defaultAction = '';     // Method to run when none specified
   
   const OrderBy = "";
   const HasMany = "";
