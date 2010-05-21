@@ -8,7 +8,7 @@ class MainApp
   ////
   // Fire up the application
 	static public function init()
-	{ 
+	{
 		@list($controller, $param, $action) = App::url();
 		
 		// no action given, read default one
@@ -81,7 +81,7 @@ class MainApp
     
 	  if (!file_exists($cpath)) {
       trigger_error('Failed to open config file', E_USER_ERROR);
-      exit();
+      return false;
 	  }
 	  
     $config = parse_ini_file($cpath, true);

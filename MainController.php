@@ -8,16 +8,16 @@ class MainController
   public $pageTitle = '';         // Title of the rendered page
   public $defaultAction = '';     // Method to run when none specified
   
-  const OrderBy = "";
-  const HasMany = "";
-  const TableName = "";
-  const ManyToMany = "";
-  const ForeignKey = "";
-  const TableSelect = "";
+  const OrderBy     = '';
+  const HasMany     = '';
+  const TableName   = '';
+  const ManyToMany  = '';
+  const ForeignKey  = '';
+  const TableSelect = '';
   
 	function __construct($id = null)
 	{
-	  // Child classes should always have the same name as their tables
+	  // child classes should always have the same name as their tables
 	  $this->class = get_class($this);
     $this->table = eval("return {$this->class}::TableName;");
     
@@ -38,9 +38,8 @@ class MainController
 		
 	}
 	
-	/**
-	 * Get One Thing
-	 */
+  ////
+  // Get One Thing
 	public function get($where)
 	{
 	  if (!is_array($where)) {
@@ -62,7 +61,7 @@ class MainController
 	 */
 	public function find($where = null, $sort = false, $limit = false)
 	{
-		$select = "*"; $q = "";
+		$select = '*'; $q = '';
     
 		// Allow custom queries
 		if (is_array($where))
@@ -70,18 +69,18 @@ class MainController
 	    foreach ($where as $k => $v)
 			{
 				$values[] = $v;
-				$args = explode(" ", $k);
+				$args = explode(' ', $k);
 				$col = array_shift($args);
-				$op = implode(" ", $args);
+				$op = implode(' ', $args);
 
 				// No column name given, default to "id"
 	 			if (empty($col)) {
-					$col = "id";
+					$col = 'id';
 				}
 				
 				// No operator given, default to "="
 				if (empty($op)) {
-					$op = "=";
+					$op = '=';
 				}
 				
 	      $tmp = (empty($q)) ? ' WHERE ' : ' AND ';
@@ -94,7 +93,7 @@ class MainController
 	  }
 		
 		if ($where == null) {
-      $q = "WHERE ?";
+      $q = 'WHERE ?';
       $values = array(1);
 		}
 		
