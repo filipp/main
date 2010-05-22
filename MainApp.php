@@ -24,7 +24,7 @@ class MainApp
 		// fire up the output buffer
 		ob_start();
 		
-		// Dispatch correct controller
+		// dispatch correct controller
 		$c = new $controller;
 		
 		// Assume no method name was given, try $param, then default to defaultAction
@@ -145,7 +145,7 @@ class MainApp
 	  $file = self::conf('app.error_log');
     
 	  if (!is_file($file)) {
-	    return false;
+	    file_put_contents($file, $msg);
 	  }
 	  
 	  $msg = trim($msg);
