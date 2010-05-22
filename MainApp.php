@@ -6,10 +6,12 @@
 class MainApp
 {
   ////
-  // Fire up the application
+  // fire up the application
 	static public function init()
 	{
-		@list($controller, $param, $action) = App::url();
+	  $url = self::url();
+	  
+		@list($controller, $param, $action) = $url;
 		
 		// no action given, read default one
 		if (empty($param)) {
@@ -27,7 +29,7 @@ class MainApp
 		// dispatch correct controller
 		$c = new $controller;
 		
-		// Assume no method name was given, try $param, then default to defaultAction
+		// assume no method name was given, try $param, then default to defaultAction
 		// controller/param/action
 		if (method_exists($c, $action)) {
 			return $c->$action($c);
@@ -44,32 +46,35 @@ class MainApp
 			return $c->$action($c);
 		}
 		
-    App::error("{$controller}_{$action}: no such method");
+    self::error("{$controller}_{$action}: no such method");
     
+    // release the output buffer
     ob_end_flush();
 		
 	}
 	
   ////
-  // Requests should always be in the form: controller/action/parameters.type
+  // requests should always be in the form: controller/action/parameters.type
   // Strip type info since it's not needed at this point
 	static function url($index = null)
 	{
 	  $url = parse_url($_SERVER['REQUEST_URI']);
-	  
+    
 	  if ($index == 'query') {
       return $url['query'];
 	  }
+	  
 	  $req = ltrim($url['path'], '/');
 		$array = explode('/', preg_replace('/\.\w+$/', '', $req));
 		return (is_numeric($index)) ? $array[$index] : $array;
+	
 	}
 	
   ////
   // return parameter part of URL
 	static function param()
 	{
-		$url = App::url();
+		$url = self::url();
 		return $url[1];
 	}
 	
@@ -122,6 +127,7 @@ class MainApp
 	static function error($msg)
 	{
 	  $err = array('result' => 'error', 'msg' => $msg);
+	  trigger_error($msg, E_USER_ERROR);
 	  // And log it locally
     self::log($msg);
 	}
@@ -184,7 +190,7 @@ class MainApp
   public function delete($table, $where)
   {
     if (empty($where)) {
-      exit(App::error('Delete without parameters'));
+      exit(self::error('Delete without parameters'));
     }
     
     list($key, $value) = each($where);
@@ -290,13 +296,15 @@ class MainApp
 	}
   
 }
-
+  
+  ////
+  // for autoloading the app's classes
 	function __autoload($class_name)
 	{
 	  $class_name = ucfirst($class_name);
     include_once "{$class_name}.php";
     if (!class_exists($class_name)) {
-			exit(App::error("{$class_name}: no such class"));
+			exit(MainApp::error("{$class_name}: no such class"));
 		}
   }
   

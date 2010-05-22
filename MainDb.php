@@ -12,12 +12,11 @@ class MainDb
     
   }
   
-	/**
-	 * Open persistent connection to database
-	 */
+  ////
+  // open persistent connection to database
   public static function getInstance()
   {
-    $c = App::conf();
+    $c = MainApp::conf();
 		
 		if (!self::$instance)
 		{
@@ -27,10 +26,11 @@ class MainDb
   				$c['db.username'], $c['db.password'], array(PDO::ATTR_PERSISTENT => true)
   			);
   			
-			  self::$instance->query("SET NAMES utf8");
+  			// always use UTF-8?
+			  self::$instance->query('SET NAMES utf8');
 		
 		  } catch (PDOException $e) {
-			  exit(App::error($e->getMessage()));
+			  exit(MainApp::error($e->getMessage()));
 		  }
 		
     }
@@ -39,25 +39,23 @@ class MainDb
   
   }
 	
-	/**
-	 * Deny cloning
-	 */
+  ////
+  // deny cloning
   public function __clone()
   {
-    trigger_error("Cloning not work is", E_USER_ERROR);
+    trigger_error('Cloning disabled', E_USER_ERROR);
   }
   
-  /**
-   * Execute an SQL query
-   * @return mixed
-   */
+  ////
+  // execute an SQL query
+  // @return mixed
   public static function query($sql, $data = null)
 	{
 	  if (!$data) {
       $data = array();
 	  }
 	  
-	  // Might be just a string
+	  // might be just a string
 	  if (!is_array($data)) {
       $data = array($data);
 	  }
@@ -71,13 +69,13 @@ class MainDb
       if (!$result) {
         list($ec, $dec, $emsg) = $pdo->errorInfo();
         $error = $emsg ."\n" . print_r(debug_backtrace(), true);
-        return App::error($error);
+        return MainApp::error($error);
       }
     
     } catch (PDOException $e) {
         $error = $e->getMessage() . $sql;
         $error .= "\n" . print_r(debug_backtrace(), true);
-        return App::error($error);
+        return MainApp::error($error);
     }
     
     // Select statements need the query results
@@ -101,13 +99,11 @@ class MainDb
   
   }
   
-  /**
-   *
-   */
+  ////
+  // fetch something from DB
   public static function fetch($sql, $data = null)
   {
-    $stmt = self::query($sql, $data)
-      or exit(App::error("Error executing query $sql"));
+    $stmt = self::query($sql, $data) or exit(MainApp::error("Error executing query $sql"));
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 	

@@ -6,6 +6,7 @@ class MainController
 {
   public $view;                   // Where to store the data to be rendered
   public $pageTitle = '';         // Title of the rendered page
+  
   public $defaultAction = '';     // Method to run when none specified
   
   const OrderBy     = '';
@@ -15,15 +16,17 @@ class MainController
   const ForeignKey  = '';
   const TableSelect = '';
   
+  ////
+  // create controller object
 	function __construct($id = null)
 	{
 	  // child classes should always have the same name as their tables
 	  $this->class = get_class($this);
     $this->table = eval("return {$this->class}::TableName;");
     
-    $this->view = new MainView();
+    $this->mainView = new MainView();
     
-    // Table name not defined, default to class name
+    // table name not defined, default to class name
     if (!$this->table) {
       $this->table = strtolower($this->class);
     }
@@ -53,12 +56,11 @@ class MainController
 	
 	public function db()
 	{
-	  return Db::getInstance();
+	  return MainDb::getInstance();
 	}
 	
-	/**
-	 * The New Find
-	 */
+  ////
+  // the New Find
 	public function find($where = null, $sort = false, $limit = false)
 	{
 		$select = '*'; $q = '';
@@ -92,7 +94,7 @@ class MainController
 			$values = array($where);
 	  }
 		
-		if ($where == null) {
+		if ($where == NULL) {
       $q = 'WHERE ?';
       $values = array(1);
 		}
@@ -128,8 +130,8 @@ class MainController
       $sql .= " LIMIT $limit";
 		}
     
-		$result = Db::fetch($sql, $values);
-		
+		$result = MainDb::fetch($sql, $values);
+    
 		if (empty($result)) {
 		  $this->data = false;
 		  return;
@@ -143,14 +145,13 @@ class MainController
 //			$this->find_children($row, $i);
 		}
 				
-		return $this;
+		return $this->data;
 		
 	}
 	
-	/**
-	 * Find all child rows for this row
-	 * @return void
-	 */
+  ////
+  // find all child rows for this row
+  // @return void
 	private function find_children($row, $i)
 	{
 		$id = $row['id']; // ID of the parent
@@ -164,7 +165,7 @@ class MainController
 		{
 			$sql = "SELECT * FROM `$child` WHERE `{$this->table}_id` = ?";
 			
-			$ref_schema = App::conf('tables');
+			$ref_schema = MainApp::conf('tables');
 			$ref_schema = $ref_schema[$child];
 			
 			if (@in_array($this->table, $ref_schema['belongsToMany'])) // m/n
@@ -181,7 +182,7 @@ class MainController
 					$sql = "SELECT * FROM `$ref` WHERE `$ref`.`{$table}_id` = ?";
 			}
       
-      $stmt = DB::query($sql, array($id));
+      $stmt = MainDb::query($sql, array($id));
 			$this->data[$i][$child] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 			
 		}
@@ -226,7 +227,7 @@ class MainController
 			
 			$sql = "SELECT $select FROM `{$parent}` WHERE `{$fkey}` = ?";
 			
-      $stmt = DB::query($sql, array($parent_id));
+      $stmt = MainDb::query($sql, array($parent_id));
 			$this->data[$i][$parent] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 			
 		}
@@ -245,7 +246,7 @@ class MainController
 	public function insert($data)
 	{
 		if (empty($data)) {
-      return App::error('Cannot insert emptiness');
+      return MainApp::error('Cannot insert emptiness');
 		}
 		
 		$insert = '';
@@ -261,7 +262,7 @@ class MainController
 		$val = implode(', ', array_keys($values));
 		$sql = "INSERT INTO `{$this->table}` ({$insert}) VALUES ({$val})";
     
-		return DB::query($sql, $values);
+		return MainDb::query($sql, $values);
 		
 	}
 	
@@ -271,7 +272,7 @@ class MainController
 	protected function delete($where, $limit = '')
 	{
 		if (empty($where)) {
-      return App::error('Cannot delete without arguments');
+      return MainApp::error('Cannot delete without arguments');
 		}
 		
 		list($key, $value) = each($where);
@@ -283,7 +284,7 @@ class MainController
     $data = array(":{$key}" => $value);
 		$sql = "DELETE FROM `{$this->table}` WHERE `{$key}` = :{$key} $limit";
     
-		return Db::query($sql, $data);
+		return MainDb::query($sql, $data);
 		
 	}
 	
@@ -295,7 +296,7 @@ class MainController
 	protected function update($data, $where = null)
   {
     if (!is_array($data)) {
-      return App::error('Cannot update without parameters');
+      return MainApp::error('Cannot update without parameters');
     }
     
     if (empty($where)) {
@@ -317,7 +318,7 @@ class MainController
     $query = rtrim($query, ", ");
     $sql = "UPDATE `{$this->table}` SET $query WHERE `$col` = :$col";
     
-    return Db::query($sql, $values);
+    return MainDb::query($sql, $values);
     
   }
 	
@@ -340,14 +341,14 @@ class MainController
 			$data = $this->view;
 		}
 		
-		$type = App::type();
+		$type = MainApp::type();
 		// @very temporary hack?
-		$tpl = (App::url(0) == "admin") ? "admin" : "default";
+		$tpl = (MainApp::url(0) == "admin") ? "admin" : "default";
 		$template = "../system/views/{$tpl}.{$type}";
 		$file = "../system/views/{$this->table}/{$view}.{$type}";
 		
 		if (!is_file($file)) {
-			return App::error("{$this->table}_{$view}_{$type}: no such view");
+			return MainApp::error("{$this->table}_{$view}_{$type}: no such view");
 		}
 		
 		if ($data) {
@@ -368,7 +369,7 @@ class MainController
 	  $tpl_contents = ob_get_contents();
 	  ob_end_clean();
 	  
-	  $title = ($this->pageTitle) ? $this->pageTitle : App::conf("defaults.title");
+	  $title = ($this->pageTitle) ? $this->pageTitle : MainApp::conf("defaults.title");
 	  $tpl_contents = preg_replace(
 	    '/<title>.*?<\/title>/', "<title>{$title}</title>", $tpl_contents
 	  );
@@ -386,7 +387,7 @@ class MainController
 	  $sql = rtrim($sql, ",");
 	  $sql = "SELECT * FROM `{$this->table}` WHERE MATCH($sql) AGAINST('{$match}')";
     
-	  return App::db()->query($sql);
+	  return MainApp::db()->query($sql);
 	
   }
   

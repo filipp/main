@@ -5,6 +5,15 @@
 // @author Filipp Lepalaan <filipp@mac.com>
 class MainView
 {
+  ////
+  // include something within the project tree
+  function snippet($path)
+  {
+    $base = dirname(__FILE__).'/../..';
+    $base = realpath($base);
+    include $base.'/'.$path;
+  }
+  
   /**
    * Create HTML <select> options from array
    * @param array array
@@ -39,16 +48,16 @@ class MainView
   			break;
   	}
 	
-  	if (is_array ($args))
+  	if (is_array($args))
   	{
-  		while (list ($k, $v) = each ($args)) {
-  			if (!empty ($k)) $str_args .= ' ' . $k . '="' . $v . '"';
+  		while (list($k, $v) = each($args)) {
+  			if (!empty($k)) $str_args .= ' ' . $k . '="' . $v . '"';
   		}
   	}
 	
-  	if (is_array ($content))
+  	if (is_array($content))
   	{
-  		foreach ($content as $k => $v)
+  		foreach($content as $k => $v)
   		{
   			//
   		}
