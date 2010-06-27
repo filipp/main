@@ -14,12 +14,11 @@ class MainView
     include $base.'/'.$path;
   }
   
-  /**
-   * Create HTML <select> options from array
-   * @param array array
-   * @param mixed select option with this value
-   * @return string
-   */
+  ////
+  // create HTML <select> options from array
+  // @param array array
+  // @param mixed select option with this value
+  // @return string
   function select($array, $current = null)
   {
   	$out = '';
@@ -31,6 +30,11 @@ class MainView
 	
   	return $out;
 	
+  }
+  
+  function input($params)
+  {
+    return $this->tag('input', $params);
   }
   
   function tag($name, $args = '', $content = '', $selected = '')

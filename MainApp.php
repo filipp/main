@@ -12,15 +12,15 @@ class MainApp
 	  $url = self::url();
 	  
 		@list($controller, $param, $action) = $url;
-		
-		// no action given, read default one
-		if (empty($param)) {
-			$action = self::conf('defaults.action');
-		}
-		
-		// no controller given, read default one
+    
+    // no controller given, read default one
 		if (!$controller) {
 		  $controller = self::conf('defaults.controller');
+		}
+		
+		// no action given, read default one
+		if (strlen($param) < 1) {
+			$action = self::conf('defaults.action');
 		}
 		
 		// fire up the output buffer
@@ -32,21 +32,21 @@ class MainApp
 		// assume no method name was given, try $param, then default to defaultAction
 		// controller/param/action
 		if (method_exists($c, $action)) {
-			return $c->$action($c);
+			return $c->$action($_POST);
 		}
 		
 		// controller/action
 		if (method_exists($c, $param)) {
-			return $c->$param($c);
+			return $c->$param($_POST);
 		}
 		
 		// controller/param
 		if (method_exists($c, $c->defaultAction)) {
 			$action = $c->defaultAction;
-			return $c->$action($c);
+			return $c->$action($_POST);
 		}
 		
-    self::error("{$controller}_{$action}: no such method");
+    self::error("{$controller}/{$action}: no such method");
     
     // release the output buffer
     ob_end_flush();
@@ -75,6 +75,10 @@ class MainApp
 	static function param()
 	{
 		$url = self::url();
+		// no parameter given
+		if (count($url) < 3) {
+      return NULL;
+		}
 		return $url[1];
 	}
 	
@@ -107,7 +111,7 @@ class MainApp
 	  $tokens = explode('/', $_SERVER['REQUEST_URI']);
 		$last = array_pop($tokens);
 		$type = ltrim(strrchr($last, '.'), '.');
-		
+    
 		$contentTypes = array('html', 'rss', 'xml', 'tpl', 'pdf', 'jpg');
     
 		if (in_array($type, $contentTypes)) {
@@ -144,21 +148,22 @@ class MainApp
   // log an error to our own logging system
   static function log($msg)
 	{
-	  if (is_array($msg)) {
-      $msg = print_r($msg, true);
-	  }
-	  
 	  $file = self::conf('app.error_log');
-    
-	  if (!is_file($file)) {
-	    file_put_contents($file, $msg);
+	  
+	  if (!file_exists($file)) {
+      exit('Log file does not exist');
 	  }
 	  
-	  $msg = trim($msg);
 	  $fh = fopen($file, 'a+');
-	  fwrite($fh, trim($msg) . "\n");
-	  fclose($fh);
 	  
+    foreach (func_get_args() as $arg)
+    {
+      if (is_array($arg)) {
+        $arg = print_r($arg, true);
+  	  }
+  	  fwrite($fh, date('r') . "\t" . trim($arg) . "\n");
+    }
+    fclose($fh);
 	}
 	
   ////
@@ -269,7 +274,7 @@ class MainApp
 	}
 
   ////
-  // Prompt for HTTP authentication
+  // prompt for HTTP authentication
   // @param string [$callback] Function that makes the actual authentication
   // @param string [$realm] Realm name
   // @return mixed false if cancelled or output of $function
@@ -286,7 +291,7 @@ class MainApp
 	}
 	
   ////
-  // Output a JavaScript fragment
+  // output a JavaScript fragment
 	public function js($string)
 	{
 	  header('Content-Type: text/javascript');

@@ -14,7 +14,7 @@ class MainController
   const TableName   = '';
   const ManyToMany  = '';
   const ForeignKey  = '';
-  const TableSelect = '';
+  const TableSelect = '';         // extra fields to select
   
   ////
   // create controller object
@@ -23,16 +23,19 @@ class MainController
 	  // child classes should always have the same name as their tables
 	  $this->class = get_class($this);
     $this->table = eval("return {$this->class}::TableName;");
-    
     $this->mainView = new MainView();
     
     // table name not defined, default to class name
     if (!$this->table) {
       $this->table = strtolower($this->class);
     }
-    
-		$this->result = null;
 		
+		// populate indices
+    $schema = MainDb::fetch("DESCRIBE `{$this->table}`");
+    foreach ($schema as $s) {
+      $this->data[$s['Field']] = $s['Default'];
+    }
+    
 		if ($id) {
 		  return $this->get($id);
 		}
@@ -50,22 +53,23 @@ class MainController
 	  }
 	  
     $this->find($where);
+    if (!is_array($this->data)) {
+      return false; // found nothing
+    }
+    
     return current($this->data);
 	
-	}
-	
-	public function db()
-	{
-	  return MainDb::getInstance();
 	}
 	
   ////
   // the New Find
 	public function find($where = null, $sort = false, $limit = false)
 	{
-		$select = '*'; $q = '';
+		$select = '*';
+		$q = '';
+    $this->data = array();
     
-		// Allow custom queries
+		// allow custom queries
 		if (is_array($where))
 		{
 	    foreach ($where as $k => $v)
@@ -116,7 +120,7 @@ class MainController
 		}
 		
 		if (!$sort && $i_sort) {
-			$sort = "ORDER BY `{$this->table}`.{$i_sort}";
+			$sort = "ORDER BY {$i_sort}";
 		}
 		
 		if ($i_select) {
@@ -142,7 +146,7 @@ class MainController
       $row = $result[$i];
 			$this->data[$i] = $row;
 			$this->find_parent($row, $i);
-//			$this->find_children($row, $i);
+			$this->find_children($row, $i);
 		}
 				
 		return $this->data;
@@ -155,7 +159,7 @@ class MainController
 	private function find_children($row, $i)
 	{
 		$id = $row['id']; // ID of the parent
-		$fk = explode(",", eval("return $this->class::HasMany;"));
+		$fk = explode(',', eval("return $this->class::HasMany;"));
 		
 		if (empty($fk[0])) {
       return false;
@@ -163,12 +167,12 @@ class MainController
 		
 		foreach ($fk as $child)
 		{
+		  // determine nature of relationship
 			$sql = "SELECT * FROM `$child` WHERE `{$this->table}_id` = ?";
-			
-			$ref_schema = MainApp::conf('tables');
-			$ref_schema = $ref_schema[$child];
-			
-			if (@in_array($this->table, $ref_schema['belongsToMany'])) // m/n
+			$one_to_many = explode(',', eval("return $child::ForeignKey;"));
+      $many_to_many = explode(',', eval("return $child::ManyToMany;"));
+      
+			if (in_array($this->table, $many_to_many)) // m/n
 			{
 				$sql = "SELECT `{$child}`.*, `{$child}_{$this->table}`.*,
 					`{$child}_{$this->table}`.id AS {$child}_{$this->table}_id,
@@ -176,8 +180,7 @@ class MainController
 					FROM `{$child}_{$this->table}`, `{$this->table}`, `$child`
 					WHERE `{$child}_{$this->table}`.`{$this->table}_id` = `$this->table`.id AND
         	`{$child}_{$this->table}`.`{$child}_id` = `$child`.id AND
-        	`{$this->table}`.id = ?
-					ORDER BY `{$child}`.{$ref_schema['orderBy']}";
+        	`{$this->table}`.id = ?";
 			} else if (@in_array ($table, $ref_schema['belongsTo'])) { // 1/m
 					$sql = "SELECT * FROM `$ref` WHERE `$ref`.`{$table}_id` = ?";
 			}
@@ -188,13 +191,12 @@ class MainController
 		}
 	}
 	
-	/**
-	 * Find all rows for this row
-	 */
+  ////
+  // find all parent rows for this row
 	private function find_parent($row, $i)
 	{
-		$select = "*";
-		$fk = explode(",", eval("return {$this->class}::ForeignKey;"));
+		$select = '*';
+		$fk = explode(',', eval("return {$this->class}::ForeignKey;"));
     
     // No parents defined
     if (empty($fk[0])) {
@@ -211,11 +213,11 @@ class MainController
 				list($lkey, $fkey) = explode("|", $this->schema['foreignKey'][$parent]);
 			}
 	*/
-			$parent_id = $row[$lkey];
+			@$parent_id = $row[$lkey];
 			
 //			$ref_schema = App::conf('tables');
 //			$ref_schema = $ref_schema[$parent];
-      $ref_schema = $fk[''];
+      @$ref_schema = $fk[''];
 			
 			if ($ref_schema['select'])
 			{
@@ -234,15 +236,8 @@ class MainController
 		
 	}
 	
-	private function find_parents()
-	{
-		
-	}
-	
-	/**
-	 * Insert this thing in the DB and return inserted
-	 * Thing
-	 */
+	////
+  // insert this thing in the DB and return inserted Thing
 	public function insert($data)
 	{
 		if (empty($data)) {
@@ -266,9 +261,8 @@ class MainController
 		
 	}
 	
-	/**
-	 * Delete This Thing
-	 */
+  ////
+  // delete This Thing
 	protected function delete($where, $limit = '')
 	{
 		if (empty($where)) {
@@ -288,11 +282,10 @@ class MainController
 		
 	}
 	
-  /**
-   * Update this Thing
-   * We keep this in the Controller since it might know
-   * more about the topmost class
-   */ 
+  ////
+  // update this Thing
+  // We keep this in the Controller since it might know
+  // more about the topmost class 
 	protected function update($data, $where = null)
   {
     if (!is_array($data)) {
@@ -303,7 +296,8 @@ class MainController
       $where = array('id' => 'id');
     }
     
-    $query = ""; $values = array();
+    $query = '';
+    $values = array();
     list($col, $val) = each($where);
     
     if (!isset($data[$col])) {
@@ -315,17 +309,16 @@ class MainController
       $values[":{$k}"] = $v;
     }
     
-    $query = rtrim($query, ", ");
+    $query = rtrim($query, ', ');
     $sql = "UPDATE `{$this->table}` SET $query WHERE `$col` = :$col";
     
     return MainDb::query($sql, $values);
     
   }
 	
-	/**
-	 * Render a view
-	 */
-	public function render($data = null, $view = null)
+	////
+  // render a view
+	public function render($view = null, $data = null)
 	{
 		// Default to the same view as the method
 		if (!$view) {
@@ -342,13 +335,13 @@ class MainController
 		}
 		
 		$type = MainApp::type();
-		// @very temporary hack?
-		$tpl = (MainApp::url(0) == "admin") ? "admin" : "default";
-		$template = "../system/views/{$tpl}.{$type}";
-		$file = "../system/views/{$this->table}/{$view}.{$type}";
+    
+    $controller = strtolower($this->class);
+		$template = "../system/views/default.{$type}";
+		$file = "../system/views/{$controller}/{$view}.{$type}";
 		
 		if (!is_file($file)) {
-			return MainApp::error("{$this->table}_{$view}_{$type}: no such view");
+			return MainApp::error("{$controller}/{$view}.{$type}: no such view");
 		}
 		
 		if ($data) {
@@ -369,7 +362,7 @@ class MainController
 	  $tpl_contents = ob_get_contents();
 	  ob_end_clean();
 	  
-	  $title = ($this->pageTitle) ? $this->pageTitle : MainApp::conf("defaults.title");
+	  $title = ($this->pageTitle) ? $this->pageTitle : MainApp::conf('defaults.title');
 	  $tpl_contents = preg_replace(
 	    '/<title>.*?<\/title>/', "<title>{$title}</title>", $tpl_contents
 	  );
@@ -391,9 +384,8 @@ class MainController
 	
   }
   
-  /**
-   * Insert or update
-   */
+  ////
+  // insert or update
   public function upsert($data, $where = null)
   {
     if(!$this->get($where)) {
@@ -401,7 +393,7 @@ class MainController
     } else {
       $out = $this->update($data, $where);
     }
-//    App::log($out);
+    
     return $out;
     
   }

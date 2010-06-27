@@ -54,7 +54,7 @@ class MainDb
 	  if (!$data) {
       $data = array();
 	  }
-	  
+    
 	  // might be just a string
 	  if (!is_array($data)) {
       $data = array($data);
@@ -78,13 +78,18 @@ class MainDb
         return MainApp::error($error);
     }
     
-    // Select statements need the query results
+    // select statements need the query results
     if (preg_match('/^SELECT/i', $sql)) {
       return $stmt;
     }
     
-    if (empty($data['id'])) {
-      $data['id'] = $pdo->lastInsertId();
+    // describe statements need the query results
+    if (preg_match('/^DESCRIBE/i', $sql)) {
+      return $stmt;
+    }
+    
+    if (empty($data[':id'])) {
+      $data[':id'] = $pdo->lastInsertId();
     }
     
     $out = array();
@@ -103,7 +108,8 @@ class MainDb
   // fetch something from DB
   public static function fetch($sql, $data = null)
   {
-    $stmt = self::query($sql, $data) or exit(MainApp::error("Error executing query $sql"));
+    $stmt = self::query($sql, $data)
+      or exit(MainApp::error('Error executing query '.$sql));
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 	
