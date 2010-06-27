@@ -124,7 +124,7 @@ class MainApp
 	
 	static function ok($msg)
 	{
-    $ok = array('result' => 'ok', 'msg' => $msg);
+    $ok = array('ok' => $msg);
     self::json($ok);
 	}
 	
