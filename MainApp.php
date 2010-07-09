@@ -130,7 +130,7 @@ class MainApp
 	
 	static function error($msg)
 	{
-	  $err = array('result' => 'error', 'msg' => $msg);
+	  $err = array('error' => $msg);
 	  trigger_error($msg, E_USER_ERROR);
 	  // And log it locally
     self::log($msg);
@@ -158,7 +158,7 @@ class MainApp
 	  
     foreach (func_get_args() as $arg)
     {
-      if (is_array($arg)) {
+      if (is_array($arg) || is_object($arg)) {
         $arg = print_r($arg, true);
   	  }
   	  fwrite($fh, date('r') . "\t" . trim($arg) . "\n");

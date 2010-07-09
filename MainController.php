@@ -53,6 +53,7 @@ class MainController
 	  }
 	  
     $this->find($where);
+    
     if (!is_array($this->data)) {
       return false; // found nothing
     }
@@ -256,14 +257,14 @@ class MainController
 		$insert = rtrim($insert, ', ');
 		$val = implode(', ', array_keys($values));
 		$sql = "INSERT INTO `{$this->table}` ({$insert}) VALUES ({$val})";
-    
+		
 		return MainDb::query($sql, $values);
 		
 	}
 	
   ////
   // delete This Thing
-	protected function delete($where, $limit = '')
+	public function delete($where, $limit = '')
 	{
 		if (empty($where)) {
       return MainApp::error('Cannot delete without arguments');
