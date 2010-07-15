@@ -131,7 +131,8 @@ class MainApp
 	static function error($msg)
 	{
 	  $err = array('error' => $msg);
-	  trigger_error($msg, E_USER_ERROR);
+	  self::json($err);
+	  trigger_error($msg, E_USER_NOTICE);
 	  // And log it locally
     self::log($msg);
 	}
@@ -280,8 +281,7 @@ class MainApp
   // @return mixed false if cancelled or output of $function
 	static function auth($callback, $realm = 'Default')
 	{
-  	if (!isset($_SERVER['PHP_AUTH_USER']))
-  	{
+  	if (!isset($_SERVER['PHP_AUTH_USER'])) {
   		header(sprintf('WWW-Authenticate: Basic realm="%s"', $realm));
   		header('HTTP/1.0 401 Unauthorized');
   		return false;
@@ -295,9 +295,8 @@ class MainApp
 	public function js($string)
 	{
 	  header('Content-Type: text/javascript');
-    print '<script type="text/javascript" charset="utf-8">
-      ' . $string . '
-    </script>';
+	  header('Content-Length: '.strlen($string));
+    echo '<script type="text/javascript" charset="utf-8">'.$string.'</script>';
 	}
   
 }

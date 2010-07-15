@@ -20,21 +20,18 @@ class MainController
   // create controller object
 	function __construct($id = null)
 	{
-	  // child classes should always have the same name as their tables
+	  // child classes typically have the same name as their tables
+	  // but not always
 	  $this->class = get_class($this);
-    $this->table = eval("return {$this->class}::TableName;");
-    $this->mainView = new MainView();
+//    $this->table = eval("return {$this->class}::TableName;");
+    $this->table = static::TableName;
     
     // table name not defined, default to class name
     if (!$this->table) {
       $this->table = strtolower($this->class);
     }
-		
-		// populate indices
-    $schema = MainDb::fetch("DESCRIBE `{$this->table}`");
-    foreach ($schema as $s) {
-      $this->data[$s['Field']] = $s['Default'];
-    }
+    
+    $this->mainView = new MainView();
     
 		if ($id) {
 		  return $this->get($id);
@@ -42,6 +39,25 @@ class MainController
 		
 		return $this;
 		
+	}
+	
+	public function init()
+	{
+	  // populate indices
+	  if ($_SESSION['config']['db.driver'] == 'mysql') {
+	    $schema = MainDb::fetch("DESCRIBE `{$this->table}`");
+	    foreach ($schema as $s) {
+        $this->data[$s['Field']] = $s['Default'];
+      }
+      return $schema;
+	  }
+	  if ($_SESSION['config']['db.driver'] == 'sqlite') {
+	    $sql = 'PRAGMA TABLE_INFO('.$this->table.')';
+      $schema = MainDb::fetch($sql);
+      foreach ($schema as $s) {
+        $this->data[$s['name']] = '';
+      }
+    }
 	}
 	
   ////
@@ -146,8 +162,12 @@ class MainController
 		{
       $row = $result[$i];
 			$this->data[$i] = $row;
-			$this->find_parent($row, $i);
-			$this->find_children($row, $i);
+			if (static::ForeignKey) {
+			  $this->find_parent($row, $i);
+			}
+			if (static::HasMany) {
+			  $this->find_children($row, $i);
+			}
 		}
 				
 		return $this->data;
@@ -248,8 +268,11 @@ class MainController
 		$insert = '';
 		$values = array();
 		
-		foreach($data as $k => $v) 
-		{
+		if (@empty($data['id'])) {
+		  unset($data['id']);
+		}
+		
+		foreach($data as $k => $v) {
 			$insert .= "`{$k}`, ";
 			$values[":{$k}"] = $v;
 		}
@@ -268,6 +291,10 @@ class MainController
 	{
 		if (empty($where)) {
       return MainApp::error('Cannot delete without arguments');
+		}
+		
+		if (!is_array($where)) {
+      $where = array('id' => $where);
 		}
 		
 		list($key, $value) = each($where);

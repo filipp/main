@@ -21,13 +21,20 @@ class MainDb
 		if (!self::$instance)
 		{
 		  try {
-			  self::$instance = new PDO(
-			    "{$c['db.driver']}:host={$c['db.host']};dbname={$c['db.name']}",
-  				$c['db.username'], $c['db.password'], array(PDO::ATTR_PERSISTENT => true)
-  			);
-  			
-  			// always use UTF-8?
-			  self::$instance->query('SET NAMES utf8');
+		    switch ($c['db.driver']) {
+		      case 'mysql':
+		        self::$instance = new PDO(
+    			    "{$c['db.driver']}:host={$c['db.host']};dbname={$c['db.name']}",
+      				$c['db.username'], $c['db.password'], array(PDO::ATTR_PERSISTENT => true)
+      			);
+      			// always use UTF-8?
+    			  self::$instance->query('SET NAMES utf8');
+		        break;
+		        
+		      case 'sqlite':
+		        self::$instance = new PDO('sqlite:'.$c['db.path']);
+		        break;
+		    }
 		
 		  } catch (PDOException $e) {
 			  exit(MainApp::error($e->getMessage()));
@@ -64,6 +71,13 @@ class MainDb
       
       $pdo = self::getInstance();
       $stmt = $pdo->prepare($sql);
+      
+      if (!$stmt) {
+        list($ec, $dec, $emsg) = $pdo->errorInfo();
+        $error = $emsg ."\n" . print_r(debug_backtrace(), true);
+        return MainApp::error($error);
+      }
+      
       $result = $stmt->execute($data);
       
       if (!$result) {
@@ -85,6 +99,11 @@ class MainDb
     
     // describe statements need the query results
     if (preg_match('/^DESCRIBE/i', $sql)) {
+      return $stmt;
+    }
+    
+    // describe statements need the query results
+    if (preg_match('/^PRAGMA/i', $sql)) {
       return $stmt;
     }
     
