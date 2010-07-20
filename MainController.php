@@ -16,14 +16,16 @@ class MainController
   const ForeignKey  = '';
   const TableSelect = '';         // extra fields to select
   
+  public $data;
+  private $table;
+  
   ////
   // create controller object
-	function __construct($id = null)
+	function __construct($where = null)
 	{
 	  // child classes typically have the same name as their tables
 	  // but not always
 	  $this->class = get_class($this);
-//    $this->table = eval("return {$this->class}::TableName;");
     $this->table = static::TableName;
     
     // table name not defined, default to class name
@@ -33,34 +35,15 @@ class MainController
     
     $this->mainView = new MainView();
     
-		if ($id) {
-		  return $this->get($id);
+		if ($where) {
+		  return $this->get($where);
 		}
 		
 		return $this;
 		
 	}
 	
-	public function init()
-	{
-	  // populate indices
-	  if ($_SESSION['config']['db.driver'] == 'mysql') {
-	    $schema = MainDb::fetch("DESCRIBE `{$this->table}`");
-	    foreach ($schema as $s) {
-        $this->data[$s['Field']] = $s['Default'];
-      }
-      return $schema;
-	  }
-	  if ($_SESSION['config']['db.driver'] == 'sqlite') {
-	    $sql = 'PRAGMA TABLE_INFO('.$this->table.')';
-      $schema = MainDb::fetch($sql);
-      foreach ($schema as $s) {
-        $this->data[$s['name']] = '';
-      }
-    }
-	}
-	
-  ////
+	////
   // Get One Thing
 	public function get($where)
 	{
@@ -74,16 +57,42 @@ class MainController
       return false; // found nothing
     }
     
-    return current($this->data);
+    if (count($this->data) == 1) {
+      return current($this->data);
+    }
+    
+	  return $this->data;
+	  
+	}
 	
+	////
+	// Initialize the fields of a class
+	// with the table's default values
+	public function init()
+	{
+	  // populate indices
+	  if ($_SESSION['config']['db.driver'] == 'mysql') {
+	    $schema = MainDb::fetch('DESCRIBE `'.$this->table.'`');
+	    foreach ($schema as $s) {
+        $this->data[$s['Field']] = $s['Default'];
+      }
+	  }
+	  
+	  if ($_SESSION['config']['db.driver'] == 'sqlite') {
+	    $sql = 'PRAGMA TABLE_INFO('.$this->table.')';
+      $schema = MainDb::fetch($sql);
+      foreach ($schema as $s) {
+        $this->data[$s['name']] = '';
+      }
+    }
 	}
 	
   ////
   // the New Find
 	public function find($where = null, $sort = false, $limit = false)
 	{
+	  $q = '';
 		$select = '*';
-		$q = '';
     $this->data = array();
     
 		// allow custom queries
@@ -112,24 +121,22 @@ class MainController
 	    }
 	  } else {
 			$q = "WHERE `{$this->table}`.`id` = ?";
-			$values = array($where);
+			$values = $where;
 	  }
 		
 		if ($where == NULL) {
       $q = 'WHERE ?';
-      $values = array(1);
+      $values = 1;
 		}
 		
 //		$schema = App::conf('tables');
 //		$this->schema = $schema[$this->table];
 		
 		// Ugly hack until PHP 5.3
-    $i_sort = eval("return {$this->class}::OrderBy;");
-    $i_fk = eval("return {$this->class}::ForeignKey;");
-    $i_mtm = eval("return {$this->class}::ManyToMany;");
-    $i_select = eval("return {$this->class}::TableSelect;");
-    
-//		$orderBy = ($sort) ? $sort : 
+    $i_sort = static::OrderBy;
+    $i_fk = static::ForeignKey;
+    $i_mtm = static::ManyToMany;
+    $i_select = static::TableSelect;
 		
 		if ($sort) {
 			list($col, $dir) = explode(' ', $sort);
@@ -154,8 +161,7 @@ class MainController
 		$result = MainDb::fetch($sql, $values);
     
 		if (empty($result)) {
-		  $this->data = false;
-		  return;
+		  return $this->data = array();
 		}
 		
 		for ($i=0; $i < count($result); $i++)
@@ -180,18 +186,24 @@ class MainController
 	private function find_children($row, $i)
 	{
 		$id = $row['id']; // ID of the parent
-		$fk = explode(',', eval("return $this->class::HasMany;"));
+		$fk = explode(',', static::HasMany);
 		
 		if (empty($fk[0])) {
-      return false;
+      return array();
 		}
 		
 		foreach ($fk as $child)
 		{
+		  $order_by = '';
+		  
+  		if ($child::OrderBy) {
+  		  $order_by = sprintf('ORDER BY `%s`.%s', $child, $child::OrderBy);
+  		}
+  		
 		  // determine nature of relationship
-			$sql = "SELECT * FROM `$child` WHERE `{$this->table}_id` = ?";
 			$one_to_many = explode(',', eval("return $child::ForeignKey;"));
       $many_to_many = explode(',', eval("return $child::ManyToMany;"));
+      $sql = "SELECT * FROM `$child` WHERE `{$this->table}_id` = ? $order_by";
       
 			if (in_array($this->table, $many_to_many)) // m/n
 			{
@@ -202,11 +214,15 @@ class MainController
 					WHERE `{$child}_{$this->table}`.`{$this->table}_id` = `$this->table`.id AND
         	`{$child}_{$this->table}`.`{$child}_id` = `$child`.id AND
         	`{$this->table}`.id = ?";
-			} else if (@in_array ($table, $ref_schema['belongsTo'])) { // 1/m
+			} else if (@in_array($table, $ref_schema['belongsTo'])) { // 1/m
 					$sql = "SELECT * FROM `$ref` WHERE `$ref`.`{$table}_id` = ?";
 			}
       
       $stmt = MainDb::query($sql, array($id));
+      if (!$stmt) {
+        return MainApp::error('Error executing query ' . $sql);
+      }
+      
 			$this->data[$i][$child] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 			
 		}
@@ -405,10 +421,10 @@ class MainController
 		  $sql .= "`{$col}`,";
 	  }
 	
-	  $sql = rtrim($sql, ",");
+	  $sql = rtrim($sql, ',');
 	  $sql = "SELECT * FROM `{$this->table}` WHERE MATCH($sql) AGAINST('{$match}')";
     
-	  return MainApp::db()->query($sql);
+	  return MainDb::fetch($sql);
 	
   }
   

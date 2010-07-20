@@ -10,7 +10,6 @@ class MainApp
 	static public function init()
 	{
 	  $url = self::url();
-	  
 		@list($controller, $param, $action) = $url;
     
     // no controller given, read default one
@@ -193,45 +192,6 @@ class MainApp
 		return sprintf('%s_%s', $loc, strtoupper($lang));
 	}
   
-  public function delete($table, $where)
-  {
-    if (empty($where)) {
-      exit(self::error('Delete without parameters'));
-    }
-    
-    list($key, $value) = each($where);
-    $sql = "DELETE FROM `$table` WHERE $key = :{$key}";
-
-    self::log($sql);
-    self::query($sql, $where);
-    
-  }
-  
-  ////
-  // insert something in the database
-  static function insert($table, $data)
-  {
-    if (empty($data)) {
-      exit(self::error('Empty insert'));
-    }
-    
-    $cols = array();
-    $vals = array();
-    
-    foreach ($data as $k => $v) {
-      $cols[] = "`{$k}`";
-      $vals[] = ":{$k}";
-    }
-    
-    $cols = implode(',', $cols);
-    $vals = implode(',', $vals);
-    $sql = "INSERT INTO `$table` ($cols) VALUES ($vals)";
-    
-    self::log($sql);
-    self::query($sql, $data);
-    
-  }
-  
   // Move this back to Controller once PHP 5.3 is out (get_called_class())
 	static function select($table, $where = 1, $what = '*', $order_by = '')
 	{
@@ -292,12 +252,24 @@ class MainApp
 	
   ////
   // output a JavaScript fragment
-	public function js($string)
+	static function js($string)
 	{
 	  header('Content-Type: text/javascript');
 	  header('Content-Length: '.strlen($string));
     echo '<script type="text/javascript" charset="utf-8">'.$string.'</script>';
 	}
+  
+  ////
+  // urlencode() string twice to work with mod_rewrite
+  static function urlenc($string)
+  {
+    return urlencode(urlencode($string));
+  }
+  
+  static function urldec($string)
+  {
+    return urldecode(urldecode($string));
+  }
   
 }
   

@@ -30,7 +30,6 @@ class MainDb
       			// always use UTF-8?
     			  self::$instance->query('SET NAMES utf8');
 		        break;
-		        
 		      case 'sqlite':
 		        self::$instance = new PDO('sqlite:'.$c['db.path']);
 		        break;
@@ -56,15 +55,27 @@ class MainDb
   ////
   // execute an SQL query
   // @return mixed
-  public static function query($sql, $data = null)
+  public static function query($sql, $data = NULL)
 	{
-	  if (!$data) {
-      $data = array();
+	  $args = func_get_args();
+	  $sql = array_shift($args);
+    
+	  if (!is_string($sql)) {
+      return false;
 	  }
     
-	  // might be just a string
 	  if (!is_array($data)) {
+      $data = $args;
+    }
+
+	  // might just be a string
+    if (!is_array($data)) {
       $data = array($data);
+    }
+	  
+	  // might be just an empty array
+	  if (empty($data)) {
+      $data = array();
 	  }
 	  
     try {
@@ -74,7 +85,7 @@ class MainDb
       
       if (!$stmt) {
         list($ec, $dec, $emsg) = $pdo->errorInfo();
-        $error = $emsg ."\n" . print_r(debug_backtrace(), true);
+        $error = $emsg ."\n" . print_r(debug_backtrace(), TRUE);
         return MainApp::error($error);
       }
       
@@ -82,13 +93,13 @@ class MainDb
       
       if (!$result) {
         list($ec, $dec, $emsg) = $pdo->errorInfo();
-        $error = $emsg ."\n" . print_r(debug_backtrace(), true);
+        $error = $emsg ."\n" . print_r(debug_backtrace(), TRUE);
         return MainApp::error($error);
       }
     
     } catch (PDOException $e) {
         $error = $e->getMessage() . $sql;
-        $error .= "\n" . print_r(debug_backtrace(), true);
+        $error .= "\n" . print_r(debug_backtrace(), TRUE);
         return MainApp::error($error);
     }
     
@@ -102,7 +113,7 @@ class MainDb
       return $stmt;
     }
     
-    // describe statements need the query results
+    // pragma statements need the query results (SQLite)
     if (preg_match('/^PRAGMA/i', $sql)) {
       return $stmt;
     }
@@ -125,10 +136,15 @@ class MainDb
   
   ////
   // fetch something from DB
-  public static function fetch($sql, $data = null)
+  public static function fetch($sql, $data = NULL)
   {
-    $stmt = self::query($sql, $data)
-      or exit(MainApp::error('Error executing query '.$sql));
+    $args = func_get_args();
+    $sql = array_shift($args);
+    
+    if (is_array($data)) {
+      $args = $data;
+    }
+    $stmt = self::query($sql, $args) or exit(MainApp::error('Error executing query '.$sql));
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
   }
 	
