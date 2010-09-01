@@ -18,6 +18,7 @@ class MainController
   
   public $data;
   private $table;
+  private $primary_key;
   
   ////
   // create controller object
@@ -76,6 +77,7 @@ class MainController
 	    foreach ($schema as $s) {
         $this->data[$s['Field']] = $s['Default'];
       }
+      return $this;
 	  }
 	  
 	  if ($_SESSION['config']['db.driver'] == 'sqlite') {
@@ -85,6 +87,7 @@ class MainController
         $this->data[$s['name']] = '';
       }
     }
+    return $this;
 	}
 	
   ////
@@ -129,10 +132,6 @@ class MainController
       $values = 1;
 		}
 		
-//		$schema = App::conf('tables');
-//		$this->schema = $schema[$this->table];
-		
-		// Ugly hack until PHP 5.3
     $i_sort = static::OrderBy;
     $i_fk = static::ForeignKey;
     $i_mtm = static::ManyToMany;
@@ -196,23 +195,26 @@ class MainController
 		{
 		  $order_by = '';
 		  
-  		if ($child::OrderBy) {
-  		  $order_by = sprintf('ORDER BY `%s`.%s', $child, $child::OrderBy);
+  		if ($ob = $child::OrderBy) {
+  		  $order_by = sprintf('ORDER BY `%s`.%s', $child, $ob);
   		}
   		
+  		$table = ($child::TableName) ? $child::TableName : $child;
+  		
 		  // determine nature of relationship
-			$one_to_many = explode(',', eval("return $child::ForeignKey;"));
-      $many_to_many = explode(',', eval("return $child::ManyToMany;"));
-      $sql = "SELECT * FROM `$child` WHERE `{$this->table}_id` = ? $order_by";
+			$one_to_many = explode(',', $child::ForeignKey);
+      $many_to_many = explode(',', $child::ManyToMany);
+      
+      $sql = "SELECT * FROM `$table` WHERE `{$this->table}_id` = ? $order_by";
       
 			if (in_array($this->table, $many_to_many)) // m/n
 			{
-				$sql = "SELECT `{$child}`.*, `{$child}_{$this->table}`.*,
-					`{$child}_{$this->table}`.id AS {$child}_{$this->table}_id,
-					`{$child}`.*
-					FROM `{$child}_{$this->table}`, `{$this->table}`, `$child`
-					WHERE `{$child}_{$this->table}`.`{$this->table}_id` = `$this->table`.id AND
-        	`{$child}_{$this->table}`.`{$child}_id` = `$child`.id AND
+				$sql = "SELECT `{$table}`.*, `{$table}_{$this->table}`.*,
+					`{$table}_{$this->table}`.id AS {$table}_{$this->table}_id,
+					`{$table}`.*
+					FROM `{$table}_{$this->table}`, `{$this->table}`, `$table`
+					WHERE `{$table}_{$this->table}`.`{$this->table}_id` = `$this->table`.id AND
+        	`{$table}_{$this->table}`.`{$table}_id` = `$table`.id AND
         	`{$this->table}`.id = ?";
 			} else if (@in_array($table, $ref_schema['belongsTo'])) { // 1/m
 					$sql = "SELECT * FROM `$ref` WHERE `$ref`.`{$table}_id` = ?";
@@ -233,7 +235,7 @@ class MainController
 	private function find_parent($row, $i)
 	{
 		$select = '*';
-		$fk = explode(',', eval("return {$this->class}::ForeignKey;"));
+		$fk = explode(',', static::ForeignKey);
     
     // No parents defined
     if (empty($fk[0])) {
@@ -244,16 +246,8 @@ class MainController
 		{
 			$fkey = 'id';
 			$lkey = "{$parent}_id";
-	/*
-			if ($this->schema['foreignKey'][$parent])
-			{
-				list($lkey, $fkey) = explode("|", $this->schema['foreignKey'][$parent]);
-			}
-	*/
+      
 			@$parent_id = $row[$lkey];
-			
-//			$ref_schema = App::conf('tables');
-//			$ref_schema = $ref_schema[$parent];
       @$ref_schema = $fk[''];
 			
 			if ($ref_schema['select'])
@@ -330,7 +324,7 @@ class MainController
   // update this Thing
   // We keep this in the Controller since it might know
   // more about the topmost class 
-	protected function update($data, $where = null)
+	protected function update($data, $where = NULL)
   {
     if (!is_array($data)) {
       return MainApp::error('Cannot update without parameters');
@@ -350,7 +344,7 @@ class MainController
     
     foreach ($data as $k => $v) {
       $query .= "`$k` = :$k, ";
-      $values[":{$k}"] = $v;
+      $values[':'.$k] = $v;
     }
     
     $query = rtrim($query, ', ');
@@ -362,9 +356,9 @@ class MainController
 	
 	////
   // render a view
-	public function render($view = null, $data = null)
+	public function render($view = NULL, $data = NULL)
 	{
-		// Default to the same view as the method
+		// default to the same view as the method
 		if (!$view) {
 			$bt = debug_backtrace();
 			$view = $bt[1]['function'];
@@ -379,19 +373,17 @@ class MainController
 		}
 		
 		$type = MainApp::type();
+		@list($c, $p, $m) = MainApp::url();
     
-    $controller = strtolower($this->class);
-		$template = "../system/views/default.{$type}";
-		$file = "../system/views/{$controller}/{$view}.{$type}";
+    if (empty($c)) {
+      $c = strtolower($this->class);
+    }
+    
+		$template = '../system/views/default.'.$type;
+		$file = "../system/views/{$c}/{$view}.{$type}";
 		
 		if (!is_file($file)) {
-			return MainApp::error("{$controller}/{$view}.{$type}: no such view");
-		}
-		
-		if ($data) {
-      foreach ($data as $k => $v) {
-		    $$k = $v;
-		  }
+			return MainApp::error("{$c}/{$view}.{$type}: no such view");
 		}
 		
 		// Capture view
@@ -430,7 +422,7 @@ class MainController
   
   ////
   // insert or update
-  public function upsert($data, $where = null)
+  public function upsert($data, $where = NULL)
   {
     if(!$this->get($where)) {
       $out = $this->insert($data);

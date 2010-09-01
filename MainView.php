@@ -32,6 +32,20 @@ class MainView
 	
   }
   
+  // $this->mainView->form('/some/save')->
+  function action($action)
+  {
+    $port = ($_SERVER['SERVER_PORT'] > 80) ? ':'.$_SERVER['SERVER_PORT'] : '';
+    $base = str_replace('index.php', '', $_SERVER['PHP_SELF']);
+    return 'action="'.$base.$action.$port.'"';
+  }
+  
+  function form($action)
+  {
+    $port = ($_SERVER['SERVER_PORT'] > 80) ? ':'.$_SERVER['SERVER_PORT'] : '';
+    $out = '<form action="'.$action.$port.'" accept-charset="utf-8"';
+  }
+  
   function input($params)
   {
     return $this->tag('input', $params);

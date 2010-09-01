@@ -103,7 +103,12 @@ class MainDb
         return MainApp::error($error);
     }
     
-    // select statements need the query results
+    // DELETE statements should report number of rows
+    if (preg_match('/^DELETE/i', $sql)) {
+      return $result->rowCount();
+    }
+    
+    // SELECT statements need the query results
     if (preg_match('/^SELECT/i', $sql)) {
       return $stmt;
     }
@@ -146,6 +151,16 @@ class MainDb
     }
     $stmt = self::query($sql, $args) or exit(MainApp::error('Error executing query '.$sql));
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+  }
+  
+  ////
+  // count something
+  public static function total($table)
+  {
+    $sql = 'SELECT COUNT(*) AS the_count FROM `%s`';
+    $res = self::fetch(sprintf($sql, $table));
+    $res = current($res);
+    return $res['the_count'];
   }
 	
 }

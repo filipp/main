@@ -26,6 +26,7 @@ class MainApp
 		ob_start();
 		
 		// dispatch correct controller
+		$controller = self::classname($controller);
 		$c = new $controller;
 		
 		// assume no method name was given, try $param, then default to defaultAction
@@ -55,17 +56,18 @@ class MainApp
   ////
   // requests should always be in the form: controller/action/parameters.type
   // Strip type info since it's not needed at this point
-	static function url($index = null)
+	static function url($part = false)
 	{
 	  $url = parse_url($_SERVER['REQUEST_URI']);
     
-	  if ($index == 'query') {
+	  if ($part == 'query') {
       return $url['query'];
 	  }
 	  
 	  $req = ltrim($url['path'], '/');
 		$array = explode('/', preg_replace('/\.\w+$/', '', $req));
-		return (is_numeric($index)) ? $array[$index] : $array;
+		
+		return (is_int($part)) ? $array[$part] : $array;
 	
 	}
 	
@@ -250,6 +252,23 @@ class MainApp
   	}
 	}
 	
+	////
+	// convert a "public" name to a class name
+	static function classname($name)
+	{
+	  $name = str_replace('_', ' ', $name);
+	  $name = ucwords($name);
+	  $class_name = str_replace(' ', '', $name);
+	  return $class_name;
+	}
+	
+	////
+	// convert a class name to a "public" name
+	static function tablename($name)
+	{
+	  
+	}
+	
   ////
   // output a JavaScript fragment
 	static function js($string)
@@ -275,13 +294,15 @@ class MainApp
   
   ////
   // for autoloading the app's classes
-	function __autoload($class_name)
+	function __autoload($name)
 	{
-	  $class_name = ucfirst($class_name);
+    $class_name = MainApp::classname($name);
     include_once "{$class_name}.php";
+    
     if (!class_exists($class_name)) {
 			exit(MainApp::error("{$class_name}: no such class"));
 		}
+		
   }
   
 ?>
