@@ -105,7 +105,7 @@ class MainDb
     
     // DELETE statements should report number of rows
     if (preg_match('/^DELETE/i', $sql)) {
-      return $result->rowCount();
+      return $stmt->rowCount();
     }
     
     // SELECT statements need the query results
