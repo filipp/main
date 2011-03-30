@@ -3,13 +3,6 @@
 // main/MainApp.php
 // @author Filipp Lepalaan <filipp@mekanisti.fi>
 // @copyright (c) 2009 Filipp Lepalaan
-
-/* This program is free software. It comes without any warranty, to
- * the extent permitted by applicable law. You can redistribute it
- * and/or modify it under the terms of the Do What The Fuck You Want
- * To Public License, Version 2, as published by Sam Hocevar. See
- * http://sam.zoy.org/wtfpl/COPYING for more details. */
- 
 class MainApp
 {
   ////
@@ -130,26 +123,33 @@ class MainApp
 		
 	}
 	
-	static function ok($msg)
+	static function ok()
 	{
-    $ok = array('ok' => $msg);
-    self::json($ok);
+	  $args = func_get_args();
+	  $ok = array_shift($args);
+    self::json(array('ok' => $ok, 'data' => $args));
 	}
 	
 	static function error($msg)
 	{
 	  $err = array('error' => $msg);
+	  // send it to the browser
 	  self::json($err);
 	  trigger_error($msg, E_USER_NOTICE);
-	  // And log it locally
+	  // and log it locally
     self::log($msg);
 	}
-
-  static function json($msg)
+  
+  ////
+  // send JSON data back to browser
+  static function json()
 	{
-	  $json = json_encode($msg);
+    $out = array();
+	  $args = func_get_args();
+	  $out = (count($args == 1)) ? $args[0] : $args;
+	  $json = json_encode($out);
 		header('Content-Type: application/json');
-		header('Content-Length: ' . mb_strlen($json));
+		header('Content-Length: '.mb_strlen($json));
 		print $json;
 	}
 	
@@ -163,26 +163,27 @@ class MainApp
       exit('Log file does not exist');
 	  }
 	  
-	  $fh = fopen($file, 'a+');
+	  $fh = fopen($file, 'a+') or die('Failed to open log file');
+	  $header = basename(__FILE__) . ' on line ' . __LINE__;
 	  
     foreach (func_get_args() as $arg)
     {
       if (is_array($arg) || is_object($arg)) {
         $arg = print_r($arg, true);
   	  }
-  	  fwrite($fh, date('r') . "\t" . trim($arg) . "\n");
+  	  fwrite($fh, $header . "\t" . trim($arg) . "\n");
     }
     fclose($fh);
 	}
 	
   ////
   // do a proper HTTP redirect
-  // @param string [$where] URL to redirect to
+  // @param string [$url] URL to redirect to
   // @return void
 	static function redirect($url = null)
 	{
 	  if (!$url) {
-	    // Is it smart to redirect back to the page which redirected here?
+	    // @fixme redirect back to the page which redirected here?
 	    $url = $_SERVER['HTTP_REFERER'];
 	  }
 		header('HTTP/1.1 303 See Other');
@@ -201,7 +202,7 @@ class MainApp
 		return sprintf('%s_%s', $loc, strtoupper($lang));
 	}
   
-  // Move this back to Controller once PHP 5.3 is out (get_called_class())
+  // move this back to Controller once PHP 5.3 is out (get_called_class())
 	static function select($table, $where = 1, $what = '*', $order_by = '')
 	{
 	  $out = array();
@@ -215,7 +216,7 @@ class MainApp
         $keys[] = "`$k` = :{$k}";
         $values[":{$k}"] = $v;
       }
-      $query = implode(" AND ", $keys);
+      $query = implode(' AND ', $keys);
 	  }
 	  
 	  if (!empty($order_by)) {
@@ -263,8 +264,7 @@ class MainApp
 	// convert a "public" name to a class name
 	static function classname($name)
 	{
-	  $name = str_replace('_', ' ', $name);
-	  $name = ucwords($name);
+	  $name = ucwords(str_replace('_', ' ', $name));
 	  $class_name = str_replace(' ', '', $name);
 	  return $class_name;
 	}
@@ -297,6 +297,43 @@ class MainApp
     return urldecode(urldecode($string));
   }
   
+  /**
+  * Load the proper language file and return the translated phrase
+  * The language file is JSON encoded and returns an associative array
+  * Language filename is determined by BCP 47 + RFC 4646
+  * http://www.rfc-editor.org/rfc/bcp/bcp47.txt
+  * @param string $phrase The phrase that needs to be translated
+  * @return string
+  */
+  static function localize($phrase)
+  { 
+    /* Static keyword is used to ensure the file is loaded only once */
+    static $translations = NULL;
+    
+    if (!defined('APP_LANGUAGE')) {
+      define('APP_LANGUAGE', self::conf('defaults.locale'));
+    }
+    
+    if (is_null($translations))
+    {
+      $lang_file = '../system/lang/' . APP_LANGUAGE . '.txt';
+      
+      if (!file_exists($lang_file)) {
+        return $phrase;
+      }
+      
+      $lang_file_content = file_get_contents($lang_file);
+      /* Load the language file as a JSON object and transform it into an associative array */
+      $translations = json_decode($lang_file_content, TRUE);
+    }
+    
+    if (array_key_exists($phrase, $translations)) {
+      return $translations[$phrase];
+    } else {
+      return $phrase;
+    }
+      
+  }
 }
   
   ////

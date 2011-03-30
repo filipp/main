@@ -2,13 +2,6 @@
 ////
 // main/MainController.php
 // @TODO: transfer boeuf.php here
-
-/* This program is free software. It comes without any warranty, to
- * the extent permitted by applicable law. You can redistribute it
- * and/or modify it under the terms of the Do What The Fuck You Want
- * To Public License, Version 2, as published by Sam Hocevar. See
- * http://sam.zoy.org/wtfpl/COPYING for more details. */
- 
 class MainController
 {
   public $view;                   // Where to store the data to be rendered
@@ -224,10 +217,11 @@ class MainController
         	`{$table}_{$this->table}`.`{$table}_id` = `$table`.id AND
         	`{$this->table}`.id = ?";
 			} else if (@in_array($table, $ref_schema['belongsTo'])) { // 1/m
-					$sql = "SELECT * FROM `$ref` WHERE `$ref`.`{$table}_id` = ?";
+				  $sql = "SELECT * FROM `$ref` WHERE `$ref`.`{$table}_id` = ?";
 			}
       
       $stmt = MainDb::query($sql, array($id));
+      
       if (!$stmt) {
         return MainApp::error('Error executing query ' . $sql);
       }
@@ -330,7 +324,8 @@ class MainController
   ////
   // update this Thing
   // We keep this in the Controller since it might know
-  // more about the topmost class 
+  // more about the topmost class
+  // return the updated Thing
 	protected function update($data, $where = NULL)
   {
     if (!is_array($data)) {

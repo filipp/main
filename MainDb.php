@@ -3,13 +3,6 @@
 // main/MainDb.php
 // @author Filipp Lepalaan <filipp@mekanisti.fi>
 // http://www.php.net/manual/en/language.oop5.patterns.php
-
-/* This program is free software. It comes without any warranty, to
- * the extent permitted by applicable law. You can redistribute it
- * and/or modify it under the terms of the Do What The Fuck You Want
- * To Public License, Version 2, as published by Sam Hocevar. See
- * http://sam.zoy.org/wtfpl/COPYING for more details. */
- 
 class MainDb
 { 
   private static $instance = NULL;
@@ -110,7 +103,7 @@ class MainDb
         return MainApp::error($error);
     }
     
-    // DELETE statements should report number of rows
+    // DELETE statements should report number of rows deleted
     if (preg_match('/^DELETE/i', $sql)) {
       return $stmt->rowCount();
     }
