@@ -1,7 +1,16 @@
 <?php
-////
-// main/MainController.php
-// @TODO: transfer boeuf.php here
+/**
+ * main/MainController.php
+ * @package main
+ * @author Filipp Lepalaan <f@0x00.co>
+ * @copyright (c) 2009-2011 Filipp Lepalaan
+ * @license
+ * This program is free software. It comes without any warranty, to
+ * the extent permitted by applicable law. You can redistribute it
+ * and/or modify it under the terms of the Do What The Fuck You Want
+ * To Public License, Version 2, as published by Sam Hocevar. See
+ * http://sam.zoy.org/wtfpl/COPYING for more details.
+ */
 class MainController
 {
   public $view;                   // Where to store the data to be rendered

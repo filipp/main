@@ -16,33 +16,34 @@ site:
 ## index.php ##
 
 A typical index.php using Main would look like this:
-<?php
-  
-  if (true) {
-    error_reporting(E_ALL|E_STRICT);
-    ini_set('display_errors', 'On');
-  }
-  
-  $sysdir = realpath(dirname(__FILE__).'/../system');
-  
-  set_include_path(
-      get_include_path()    . PATH_SEPARATOR
-      . $sysdir             . PATH_SEPARATOR
-      . "{$sysdir}/lib"     . PATH_SEPARATOR
-      . "{$sysdir}/conf"    . PATH_SEPARATOR
-      . "{$sysdir}/classes" . PATH_SEPARATOR
-    );
-  
-  require_once 'main/MainApp.php';
-  require_once 'main/MainController.php';
-  
-  $locale = MainApp::locale();
-  setlocale(LC_ALL, $locale);
-  session_start();
-  
-  MainApp::init();
 
-?>
+    <?php
+  
+      if (TRUE) {
+        error_reporting(E_ALL|E_STRICT);
+        ini_set('display_errors', 'On');
+      }
+      
+      $sysdir = realpath(dirname(__FILE__).'/../system');
+  
+      set_include_path(
+        get_include_path()    . PATH_SEPARATOR
+        . $sysdir             . PATH_SEPARATOR
+        . "{$sysdir}/lib"     . PATH_SEPARATOR
+        . "{$sysdir}/conf"    . PATH_SEPARATOR
+        . "{$sysdir}/classes" . PATH_SEPARATOR
+      );
+  
+      require_once 'main/MainApp.php';
+      require_once 'main/MainController.php';
+  
+      $locale = MainApp::locale();
+      setlocale(LC_ALL, $locale);
+      session_start();
+  
+      MainApp::init();
+
+    ?>
 
 ## .htaccess ##
 
