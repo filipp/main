@@ -13,6 +13,16 @@ MAIN - the simple PHP framework
         views (create a folder for each controller and an action.html file for every view)
     data (a good place to store all your application data, logs, etc)
 
+So a typical bootstrap would go something like this:
+
+    cd mysite
+    mkdir system/lib data public system
+    touch public/index.php data/error.log
+    cd system/lib
+    git clone git://github.com/filipp/main.git
+    cd ../..
+    mate .
+  
 ## index.php ##
 
 A typical index.php using Main would look like this:
