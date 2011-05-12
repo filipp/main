@@ -2,16 +2,16 @@ MAIN - the simple PHP framework
 
 ## Folder structure ##
 
-site:
-  public (this is the DocRoot for your site)
-    .htaccess (see .htaccess)
-    index.php
-  system (put all system support files in here)
-    lib
-      main
-    classes (store all your model files in here)
-    views (create a folder for each controller and an action.html file for every view)
-  data (a good place to store all your application data, logs, etc)
+    site:
+      public (the DocRoot of your site)
+      .htaccess (see .htaccess)
+      index.php
+    system (put all system support files in here)
+      lib
+        main
+        classes (store all your model files in here)
+        views (create a folder for each controller and an action.html file for every view)
+    data (a good place to store all your application data, logs, etc)
 
 ## index.php ##
 
@@ -50,11 +50,11 @@ A typical index.php using Main would look like this:
 Main uses and is developed on using Apache httpd's mod_rewrite module. The .htaccess file in your web app's
 public root folder should look something like this:
 
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteCond %{REQUEST_FILENAME} -s [OR]
-  RewriteCond %{REQUEST_FILENAME} -l [OR]
-  RewriteCond %{REQUEST_FILENAME} -d
-  RewriteRule ^.*$ - [NC,L]
-  RewriteRule ^.*$ index.php [NC,L]
-</IfModule>
+    <IfModule mod_rewrite.c>
+      RewriteEngine On
+      RewriteCond %{REQUEST_FILENAME} -s [OR]
+      RewriteCond %{REQUEST_FILENAME} -l [OR]
+      RewriteCond %{REQUEST_FILENAME} -d
+      RewriteRule ^.*$ - [NC,L]
+      RewriteRule ^.*$ index.php [NC,L]
+    </IfModule>
