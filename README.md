@@ -16,8 +16,8 @@ MAIN - the simple PHP framework
 So a typical bootstrap would go something like this:
 
     cd mysite
-    mkdir system/lib data public system
-    touch public/index.php data/error.log
+    mkdir -p system data public system/lib system/classes system/views
+    touch public/index.php data/error.log views/default.html
     cd system/lib
     git clone git://github.com/filipp/main.git
     cd ../..

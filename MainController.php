@@ -11,6 +11,7 @@
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://sam.zoy.org/wtfpl/COPYING for more details.
  */
+
 class MainController
 {
   public $view;                   // Where to store the data to be rendered
@@ -18,8 +19,8 @@ class MainController
   
   public $defaultAction = '';     // Method to run when none specified
   
-  const OrderBy     = '';
-  const HasMany     = '';
+  const OrderBy     = '';         // which column to order the results by
+  const HasMany     = '';         
   const TableName   = '';
   const ManyToMany  = '';
   const ForeignKey  = '';
@@ -81,22 +82,26 @@ class MainController
 	public function init()
 	{
 	  // populate indices
-	  if ($_SESSION['config']['db.driver'] == 'mysql') {
-	    $schema = MainDb::fetch('DESCRIBE `'.$this->table.'`');
-	    foreach ($schema as $s) {
-        $this->data[$s['Field']] = $s['Default'];
-      }
-      return $this;
-	  }
+	  $driver = MainApp::conf('db.driver');
 	  
-	  if ($_SESSION['config']['db.driver'] == 'sqlite') {
+	  switch ($driver) {
+	   case 'sqlite':
 	    $sql = 'PRAGMA TABLE_INFO('.$this->table.')';
       $schema = MainDb::fetch($sql);
       foreach ($schema as $s) {
         $this->data[$s['name']] = '';
       }
-    }
     return $this;
+	  break;
+	  
+   default:
+     $schema = MainDb::fetch('DESCRIBE `'.$this->table.'`');
+  	  foreach ($schema as $s) {
+  	    $this->data[$s['Field']] = $s['Default'];
+     }
+     return $this;
+     break;
+	  }
 	}
 	
   ////

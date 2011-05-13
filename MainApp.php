@@ -11,6 +11,7 @@
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://sam.zoy.org/wtfpl/COPYING for more details.
  */
+ 
 class MainApp
 {
   ////
@@ -24,7 +25,7 @@ class MainApp
 		if (!$controller) {
 		  $controller = self::conf('defaults.controller');
 		}
-		
+    
 		// no action given, read default one
 		if (strlen($param) < 1) {
 			$action = self::conf('defaults.action');
@@ -36,9 +37,9 @@ class MainApp
 		// dispatch correct controller
 		$controller = self::classname($controller);
 		$c = new $controller;
-		
+    
 		// assume no method name was given, try $param, then default to defaultAction
-		// controller/param/action
+		// URL format is always controller/param/action
 		if (method_exists($c, $action)) {
 			return $c->$action($_POST);
 		}
@@ -99,7 +100,7 @@ class MainApp
     
 	  if (!file_exists($cpath)) {
       trigger_error('Failed to open config file', E_USER_ERROR);
-      return false;
+      return FALSE;
 	  }
 	  
     $config = parse_ini_file($cpath, true);
@@ -343,18 +344,19 @@ class MainApp
       
   }
 }
-  
-  ////
-  // for autoloading the app's classes
-	function __autoload($name)
-	{
-    $class_name = MainApp::classname($name);
-    include_once "{$class_name}.php";
+
+////
+// for autoloading the app's classes
+function __autoload($name)
+{
+  $class_name = MainApp::classname($name);
+
+  include_once "{$class_name}.php";
     
-    if (!class_exists($class_name)) {
-			exit(MainApp::error("{$class_name}: no such class"));
-		}
-		
+  if (!class_exists($class_name)) {
+  	exit(MainApp::error("{$class_name}: no such class"));
   }
+
+}
   
 ?>
