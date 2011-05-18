@@ -17,7 +17,8 @@ class MainController
   public $view;                   // Where to store the data to be rendered
   public $pageTitle = '';         // Title of the rendered page
   
-  public $defaultAction = '';     // Method to run when none specified
+  protected $template = 'default';  // The base template for this controller (view)
+  private $defaultAction = '';    // Method to run when none specified
   
   const OrderBy     = '';         // which column to order the results by
   const HasMany     = '';         
@@ -395,7 +396,7 @@ class MainController
       $c = strtolower($this->class);
     }
     
-		$template = '../system/views/default.'.$type;
+		$template = '../system/views/'.$this->template.'.'.$type;
 		$file = "../system/views/{$c}/{$view}.{$type}";
 		
 		if (!is_file($file)) {
