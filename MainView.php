@@ -48,6 +48,13 @@ class MainView
 	
   }
   
+  function checkbox($name, $value, $checked = FALSE, $params = NULL)
+  {
+    $checked = ($checked) ? ' checked="checked"' : '';
+    $html = '<input type="checkbox" name="'.$name.'" value="'.$value.'"'.$checked.'/>';
+    return $html;
+  }
+  
   // $this->mainView->form('/some/save')->
   function action($action)
   {
