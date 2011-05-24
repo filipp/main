@@ -142,9 +142,10 @@ class MainApp
 	static function error($msg)
 	{
 	  $err = array('error' => $msg);
+	  header('HTTP/1.0 500 Internal Server Error');
 	  // send it to the browser
-	  self::json($err);
-	  trigger_error($msg, E_USER_NOTICE);
+	  //self::json($err);
+	  //trigger_error($msg, E_USER_NOTICE);
 	  // and log it locally
     self::log($msg);
 	}

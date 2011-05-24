@@ -71,7 +71,7 @@ class MainDb
 	  $sql = array_shift($args);
     
 	  if (!is_string($sql)) {
-      return false;
+      return FALSE;
 	  }
     
 	  if (!is_array($data)) {

@@ -74,7 +74,10 @@ class MainView
     return $this->tag('input', $params);
   }
   
-  function tag($name, $args = '', $content = '', $selected = '')
+  /**
+   * Create an HTML tag
+   */
+  function tag($name, $args = '', $content = FALSE, $selected = '')
   {
   	$str_args = '';
   	$out = '<' . $name;
@@ -105,8 +108,10 @@ class MainView
   	} else {
   		//
   	}
-	
-  	if (empty ($content)) return $out . $str_args . ' />';
+	  
+  	if ($content === FALSE) {
+  	  return $out . $str_args . ' />';
+  	}
 		
   	return "{$out}{$str_args}>{$content}</{$name}>\n";
 	
