@@ -14,26 +14,27 @@
 
 class MainController
 {
-  public $view;                   // Where to store the data to be rendered
-  public $pageTitle = '';         // Title of the rendered page
+  public $view;                     // Where to store the data to be rendered
+  public $pageTitle = '';           // Title of the rendered page
   
   protected $template = 'default';  // The base template for this controller (view)
-  private $defaultAction = '';    // Method to run when none specified
   
-  const OrderBy     = '';         // which column to order the results by
+  private $defaultAction = '';      // Method to run when none specified
+  
+  const OrderBy     = '';           // which column to order the results by
   const HasMany     = '';         
   const TableName   = '';
   const ManyToMany  = '';
   const ForeignKey  = '';
   const TableSelect = '';         // extra fields to select
   
-  public $data;
-  private $table;
-  private $primary_key;
+  public $data;                   // data returned from DB
+  private $table;                 // corresponding Db table
+  private $primary_key;           // name of primary key column
   
   ////
   // create controller object
-	function __construct($where = null)
+	function __construct($where = NULL)
 	{
 	  // child classes typically have the same name as their tables
 	  // but not always

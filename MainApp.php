@@ -11,7 +11,6 @@
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://sam.zoy.org/wtfpl/COPYING for more details.
  */
- 
 class MainApp
 {
   ////
@@ -30,15 +29,15 @@ class MainApp
 		if (strlen($param) < 1) {
 			$action = self::conf('defaults.action');
 		}
-		
+    
 		// fire up the output buffer
 		ob_start();
 		
-		// dispatch correct controller
+		// dispatch requested controller
 		$controller = self::classname($controller);
-		$c = new $controller;
+		$c = new $controller();
     
-		// assume no method name was given, try $param, then default to defaultAction
+		// assume no method name was given, try $param
 		// URL format is always controller/param/action
 		if (method_exists($c, $action)) {
 			return $c->$action($_POST);
@@ -49,15 +48,16 @@ class MainApp
 			return $c->$param($_POST);
 		}
 		
-		// controller/param
+		// ...then fall back to defaultAction
 		if (method_exists($c, $c->defaultAction)) {
 			$action = $c->defaultAction;
 			return $c->$action($_POST);
 		}
 		
-    self::error("{$controller}/{$action}: no such method");
+		// don't know what to do, giving up...
+    self::error("no such method: {$controller}/{$action}");
     
-    // release the output buffer
+    // release the output buffer, normally this is done in render()
     ob_end_flush();
 		
 	}
@@ -65,13 +65,15 @@ class MainApp
   ////
   // requests should always be in the form: controller/action/parameters.type
   // Strip type info since it's not needed at this point
-	static function url($part = false)
+	static function url($part = FALSE)
 	{
 	  $url = parse_url($_SERVER['REQUEST_URI']);
     
-	  if ($part == 'query') {
-      return $url['query'];
-	  }
+    if ($part == 'query') {
+      if (isset($url['query'])) {
+        return $url['query'];
+  	  }
+    }
 	  
 	  $req = ltrim($url['path'], '/');
 		$array = explode('/', preg_replace('/\.\w+$/', '', $req));
