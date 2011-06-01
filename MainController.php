@@ -210,12 +210,12 @@ class MainController
 		foreach ($fk as $child)
 		{
 		  $order_by = '';
-		  
-  		if ($ob = $child::OrderBy) {
-  		  $order_by = sprintf('ORDER BY `%s`.%s', $child, $ob);
-  		}
   		
   		$table = ($child::TableName) ? $child::TableName : $child;
+  		
+  		if ($ob = $child::OrderBy) {
+  		  $order_by = sprintf('ORDER BY `%s`.%s', $table, $ob);
+  		}
   		
 		  // determine nature of relationship
 			$one_to_many = explode(',', $child::ForeignKey);
@@ -226,14 +226,15 @@ class MainController
 			if (in_array($this->table, $many_to_many)) // m/n
 			{
 				$sql = "SELECT `{$table}`.*, `{$table}_{$this->table}`.*,
-					`{$table}_{$this->table}`.id AS {$table}_{$this->table}_id,
-					`{$table}`.*
-					FROM `{$table}_{$this->table}`, `{$this->table}`, `$table`
-					WHERE `{$table}_{$this->table}`.`{$this->table}_id` = `$this->table`.id AND
-        	`{$table}_{$this->table}`.`{$table}_id` = `$table`.id AND
-        	`{$this->table}`.id = ?";
-			} else if (@in_array($table, $ref_schema['belongsTo'])) { // 1/m
-				  $sql = "SELECT * FROM `$ref` WHERE `$ref`.`{$table}_id` = ?";
+				`{$table}_{$this->table}`.id AS {$table}_{$this->table}_id,
+				`{$table}`.*
+				FROM `{$table}_{$this->table}`, `{$this->table}`, `$table`
+				WHERE `{$table}_{$this->table}`.`{$this->table}_id` = `$this->table`.id AND
+      	`{$table}_{$this->table}`.`{$table}_id` = `$table`.id AND
+      	`{$this->table}`.id = ?";
+			}
+			else if (@in_array($table, $ref_schema['belongsTo'])) { // 1/m
+			  $sql = "SELECT * FROM `$ref` WHERE `$ref`.`{$table}_id` = ?";
 			}
       
       $stmt = MainDb::query($sql, array($id));
@@ -439,7 +440,7 @@ class MainController
   }
   
   ////
-  // insert or update
+  // Insert or update
   public function upsert($data, $where = NULL)
   {
     if(!$this->get($where)) {
