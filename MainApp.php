@@ -35,8 +35,8 @@ class MainApp
 		
 		// dispatch requested controller
 		$controller = self::classname($controller);
-		$c = new $controller();
-    
+		$c = new $controller;
+//    var_dump($c);
 		// assume no method name was given, try $param
 		// URL format is always controller/param/action
 		if (method_exists($c, $action)) {
@@ -144,7 +144,7 @@ class MainApp
 	static function error($msg)
 	{
 	  $err = array('error' => $msg);
-	  header('HTTP/1.0 500 Internal Server Error');
+//	  header('HTTP/1.0 500 Internal Server Error');
 	  // send it to the browser
 	  //self::json($err);
 	  //trigger_error($msg, E_USER_NOTICE);
@@ -335,7 +335,8 @@ class MainApp
       }
       
       $lang_file_content = file_get_contents($lang_file);
-      /* Load the language file as a JSON object and transform it into an associative array */
+      /* Load the language file as a JSON object 
+      and transform it into an associative array */
       $translations = json_decode($lang_file_content, TRUE);
     }
     
@@ -353,7 +354,7 @@ class MainApp
 function __autoload($name)
 {
   $class_name = MainApp::classname($name);
-
+  
   include_once "{$class_name}.php";
     
   if (!class_exists($class_name)) {

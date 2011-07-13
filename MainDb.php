@@ -62,6 +62,12 @@ class MainDb
     trigger_error('Cloning disabled', E_USER_ERROR);
   }
   
+  public function one($sql, $data = NULL)
+  {
+    $result = self::fetch($sql, $data);
+    return current($result);
+  }
+  
   ////
   // execute an SQL query
   // @return mixed
