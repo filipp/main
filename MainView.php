@@ -69,6 +69,11 @@ class MainView
     $out = '<form action="'.$action.$port.'" accept-charset="utf-8"';
   }
   
+  function clean($string)
+  {
+    return htmlspecialchars($string, ENT_QUOTES, 'UTF-8');
+  }
+  
   function input($params)
   {
     return $this->tag('input', $params);

@@ -113,7 +113,8 @@ class MainDb
         return MainApp::error($error);
       }
     
-    } catch (PDOException $e) {
+    }
+    catch (PDOException $e) {
         $error = $e->getMessage() . $sql;
         $error .= "\n" . print_r(debug_backtrace(), TRUE);
         return MainApp::error($error);

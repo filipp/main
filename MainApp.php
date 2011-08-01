@@ -11,6 +11,7 @@
  * To Public License, Version 2, as published by Sam Hocevar. See
  * http://sam.zoy.org/wtfpl/COPYING for more details.
  */
+ 
 class MainApp
 {
   ////
@@ -172,7 +173,13 @@ class MainApp
 	  $file = self::conf('app.error_log');
 	  
 	  if (!file_exists($file)) {
-      exit('Log file does not exist');
+	  	// try to guess log file location
+	  	$basedir = dirname( dirname( $_SERVER['SCRIPT_FILENAME'] ));
+	  	$file = sprintf( '%s/data/logs/error.log', $basedir );
+	  }
+	  
+	  if( !file_exists( $file )) {
+	  	exit( 'Log file does not exist' );
 	  }
 	  
 	  $fh = fopen($file, 'a+') or die('Failed to open log file');

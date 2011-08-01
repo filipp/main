@@ -22,15 +22,16 @@ class MainController
   private $defaultAction = '';      // Method to run when none specified
   
   const OrderBy     = '';           // which column to order the results by
+  const GroupBy			= '';						// which column to group the results by
   const HasMany     = '';         
   const TableName   = '';
   const ManyToMany  = '';
   const ForeignKey  = '';
-  const TableSelect = '';         // extra fields to select
+  const TableSelect = '';         	// extra fields to select
   
-  public $data;                   // data returned from DB
-  private $table;                 // corresponding Db table
-  private $primary_key;           // name of primary key column
+  public $data;                   	// data returned from DB
+  private $table;                		// corresponding Db table
+  private $primary_key;           	// name of primary key column
   
   ////
   // create controller object
@@ -104,6 +105,24 @@ class MainController
      return $this;
      break;
 	  }
+	}
+	
+	/**
+	 * Return one thing, without the relatives
+	 */
+	public function one($where)
+	{
+	  if (is_numeric($where)) {
+      $where = array('id' => $where);
+	  }
+	  
+	  list($key, $value) = each($where);
+	  
+	  $sql = 'SELECT * FROM `%s` WHERE `%s` = ? LIMIT 1';
+	  $sql = sprintf($sql, $this->table, $key);
+
+	  return MainDb::one($sql, array($value));
+	  
 	}
 	
   ////
@@ -209,6 +228,7 @@ class MainController
 		
 		foreach ($fk as $child)
 		{
+			$group_by = '';
 		  $order_by = '';
   		
   		$table = ($child::TableName) ? $child::TableName : $child;
@@ -217,11 +237,24 @@ class MainController
   		  $order_by = sprintf('ORDER BY `%s`.%s', $table, $ob);
   		}
   		
+  		if ($gb = $child::GroupBy) {
+  		  $group_by = sprintf('GROUP BY `%s`.%s', $table, $gb);
+  		}
+			
 		  // determine nature of relationship
 			$one_to_many = explode(',', $child::ForeignKey);
       $many_to_many = explode(',', $child::ManyToMany);
       
-      $sql = "SELECT * FROM `$table` WHERE `{$this->table}_id` = ? $order_by";
+      $sql = 'SELECT *';
+      
+			// allow custom selections
+			if ($child::TableSelect) {
+				$sql .= ', ' . $child::TableSelect;
+			}
+			
+      $sql .= " FROM `$table` WHERE `{$this->table}_id` = ? 
+      $group_by
+      $order_by";
       
 			if (in_array($this->table, $many_to_many)) // m/n
 			{
@@ -236,7 +269,7 @@ class MainController
 			else if (@in_array($table, $ref_schema['belongsTo'])) { // 1/m
 			  $sql = "SELECT * FROM `$ref` WHERE `$ref`.`{$table}_id` = ?";
 			}
-      
+			
       $stmt = MainDb::query($sql, array($id));
       
       if (!$stmt) {
@@ -315,6 +348,7 @@ class MainController
 	
   ////
   // delete This Thing
+  // @return whatever MainDb returns
 	public function delete($where, $limit = '')
 	{
 		if (empty($where)) {
