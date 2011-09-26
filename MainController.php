@@ -33,6 +33,12 @@ class MainController
   private $table;                		// corresponding Db table
   private $primary_key;           	// name of primary key column
   
+  private $sql_select = 'SELECT %s FROM %s %s %s';
+  
+  private $sql_insert = 'INSERT INTO %s (%s) VALUES (%s)';
+  private $sql_update = 'UPDATE %s SET %s';
+  private $sql_delete = 'DELETE FROM %s WHERE %s.%s = %s';
+  
   ////
   // create controller object
 	function __construct($where = NULL)
@@ -42,9 +48,9 @@ class MainController
 	  $this->class = get_class($this);
     $this->table = static::TableName;
     
-    // table name not defined, default to class name
+    // table name not defined, default to plural class name
     if (!$this->table) {
-      $this->table = strtolower($this->class);
+      $this->table = strtolower($this->class) . 's';
     }
     
     $this->mainView = new MainView();
@@ -88,23 +94,37 @@ class MainController
 	  $driver = MainApp::conf('db.driver');
 	  
 	  switch ($driver) {
+	    case 'pgsql':
+	      $sql = "SELECT column_name 
+	      FROM INFORMATION_SCHEMA.COLUMNS 
+	      WHERE table_name = '{$this->table}'";
+	      
+	      $schema = MainDb::fetch($sql);
+	      
+	      foreach( $schema as $s ) {
+	        $this->data[$s['column_name']] = '';
+	      }
+	      
+	      break;
+	      
 	   case 'sqlite':
 	    $sql = 'PRAGMA TABLE_INFO('.$this->table.')';
       $schema = MainDb::fetch($sql);
       foreach ($schema as $s) {
         $this->data[$s['name']] = '';
       }
-    return $this;
 	  break;
-	  
-   default:
+	
+   case 'mysql':
      $schema = MainDb::fetch('DESCRIBE `'.$this->table.'`');
   	  foreach ($schema as $s) {
   	    $this->data[$s['Field']] = $s['Default'];
      }
-     return $this;
      break;
 	  }
+	  
+	  return $this;
+	  
 	}
 	
 	/**
@@ -153,12 +173,12 @@ class MainController
 					$op = '=';
 				}
 				
-	      $tmp = (empty($q)) ? ' WHERE ' : ' AND ';
-	      $q .= $tmp . "`{$col}`" . ' ' . $op . ' ?';
+	      $tmp = (empty($q)) ? 'WHERE ' : 'AND';
+	      $q .= sprintf(' %s %s %s ?', $tmp, $col, $op);
 	      
 	    }
 	  } else {
-			$q = "WHERE `{$this->table}`.`id` = ?";
+			$q = "WHERE {$this->table}.id = ?";
 			$values = $where;
 	  }
 		
@@ -174,7 +194,7 @@ class MainController
 		
 		if ($sort) {
 			list($col, $dir) = explode(' ', $sort);
-			$sort = "ORDER BY `{$this->table}`.`$col` $dir";
+			$sort = "ORDER BY {$this->table}.{$col} $dir";
 		}
 		
 		if (!$sort && $i_sort) {
@@ -183,16 +203,16 @@ class MainController
 		
 		if ($i_select) {
 			list($select_col, $args) = explode(",", $i_select);
-			$select .= ", $args AS `{$select_col}`";
+			$select .= ", $args AS {$select_col}";
 		}
 		
-		$sql = "SELECT $select FROM `{$this->table}` $q $sort";
+		$this->sql_select = sprintf($this->sql_select, $select, $this->table, $q, $sort);
     
     if ($limit) {
-      $sql .= " LIMIT $limit";
+      $this->sql_select .= " LIMIT $limit";
 		}
     
-		$result = MainDb::fetch($sql, $values);
+		$result = MainDb::fetch($this->sql_select, $values);
     
 		if (empty($result)) {
 		  return $this->data = array();
@@ -219,7 +239,7 @@ class MainController
   // @return void
 	private function find_children($row, $i)
 	{
-		$id = $row['id']; // ID of the parent
+		$id = $row['id']; // ID of this parent
 		$fk = explode(',', static::HasMany);
 		
 		if (empty($fk[0])) {
@@ -234,11 +254,11 @@ class MainController
   		$table = ($child::TableName) ? $child::TableName : $child;
   		
   		if ($ob = $child::OrderBy) {
-  		  $order_by = sprintf('ORDER BY `%s`.%s', $table, $ob);
+  		  $order_by = sprintf('ORDER BY %s.%s', $table, $ob);
   		}
   		
   		if ($gb = $child::GroupBy) {
-  		  $group_by = sprintf('GROUP BY `%s`.%s', $table, $gb);
+  		  $group_by = sprintf('GROUP BY %s.%s', $table, $gb);
   		}
 			
 		  // determine nature of relationship
@@ -252,9 +272,8 @@ class MainController
 				$sql .= ', ' . $child::TableSelect;
 			}
 			
-      $sql .= " FROM `$table` WHERE `{$this->table}_id` = ? 
-      $group_by
-      $order_by";
+			$pk = sprintf('%s_id', strtolower(get_class($this)));
+      $sql .= " FROM $table WHERE {$pk} = ? $group_by $order_by";
       
 			if (in_array($this->table, $many_to_many)) // m/n
 			{

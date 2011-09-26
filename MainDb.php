@@ -40,8 +40,17 @@ class MainDb
       			// always use UTF-8?
     			  self::$instance->query('SET NAMES utf8');
 		        break;
+		      case 'pgsql':
+		        self::$instance = new PDO(
+    			    "{$c['db.driver']}:host={$c['db.host']};dbname={$c['db.name']}",
+      				$c['db.username'], $c['db.password'], array(PDO::ATTR_PERSISTENT => true)
+      			);
+		        break;
 		      case 'sqlite':
 		        self::$instance = new PDO('sqlite:'.$c['db.path']);
+		        break;
+		      default:
+		        exit('Unknown db driver: ' . $c['db.driver']);
 		        break;
 		    }
 		
@@ -166,8 +175,10 @@ class MainDb
     if (is_array($data)) {
       $args = $data;
     }
-    $stmt = self::query($sql, $args) or exit(MainApp::error('Error executing query '.$sql));
+    
+    $stmt = self::query($sql, $args) or exit(MainApp::error('Error executing query: '.$sql));
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
   }
   
   ////
