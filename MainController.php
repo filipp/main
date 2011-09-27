@@ -33,6 +33,8 @@ class MainController
   private $table;                		// corresponding Db table
   private $primary_key;           	// name of primary key column
   
+  private $sql = '';                // the current SQL query
+  
   private $sql_select = 'SELECT %s FROM %s %s %s';
   
   private $sql_insert = 'INSERT INTO %s (%s) VALUES (%s)';
@@ -102,7 +104,7 @@ class MainController
 	      $schema = MainDb::fetch($sql);
 	      
 	      foreach( $schema as $s ) {
-	        $this->data[$s['column_name']] = '';
+	        $this->data[$s['column_name']] = NULL;
 	      }
 	      
 	      break;
@@ -138,10 +140,10 @@ class MainController
 	  
 	  list($key, $value) = each($where);
 	  
-	  $sql = 'SELECT * FROM `%s` WHERE `%s` = ? LIMIT 1';
-	  $sql = sprintf($sql, $this->table, $key);
+	  $this->sql = 'SELECT * FROM %s WHERE %s = ? LIMIT 1';
+	  $this->sql = sprintf($this->sql, $this->table, $key);
 
-	  return MainDb::one($sql, array($value));
+	  return MainDb::one($this->sql, array($value));
 	  
 	}
 	
@@ -251,6 +253,7 @@ class MainController
 			$group_by = '';
 		  $order_by = '';
   		
+  		// try to determine table name of child
   		$table = ($child::TableName) ? $child::TableName : $child;
   		
   		if ($ob = $child::OrderBy) {
@@ -277,13 +280,13 @@ class MainController
       
 			if (in_array($this->table, $many_to_many)) // m/n
 			{
-				$sql = "SELECT `{$table}`.*, `{$table}_{$this->table}`.*,
-				`{$table}_{$this->table}`.id AS {$table}_{$this->table}_id,
-				`{$table}`.*
-				FROM `{$table}_{$this->table}`, `{$this->table}`, `$table`
-				WHERE `{$table}_{$this->table}`.`{$this->table}_id` = `$this->table`.id AND
-      	`{$table}_{$this->table}`.`{$table}_id` = `$table`.id AND
-      	`{$this->table}`.id = ?";
+				$sql = "SELECT {$table}.*, {$table}_{$this->table}.*,
+				{$table}_{$this->table}.id AS {$table}_{$this->table}_id,
+				{$table}.*
+				FROM {$table}_{$this->table}, {$this->table}, {$table}
+				WHERE {$table}_{$this->table}.{$pk} = {$this->table}.id AND
+      	{$table}_{$this->table}.{$pk} = {$table}.id AND
+      	{$this->table}.id = ?";
 			}
 			else if (@in_array($table, $ref_schema['belongsTo'])) { // 1/m
 			  $sql = "SELECT * FROM `$ref` WHERE `$ref`.`{$table}_id` = ?";
@@ -295,7 +298,7 @@ class MainController
         return MainApp::error('Error executing query ' . $sql);
       }
       
-			$this->data[$i][$child] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+			$this->data[$i][$table] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 			
 		}
 	}
@@ -308,7 +311,7 @@ class MainController
 		$fk = explode(',', static::ForeignKey);
     
     // No parents defined
-    if (empty($fk[0])) {
+    if (empty($fk)) {
       return false;
     }
 		
@@ -316,6 +319,9 @@ class MainController
 		{
 			$fkey = 'id';
 			$lkey = "{$parent}_id";
+			
+			// try to determine parent table's table name
+			$parent = ($parent::TableName) ? $parent::TableName : $parent;
       
 			@$parent_id = $row[$lkey];
       @$ref_schema = $fk[''];
@@ -324,11 +330,11 @@ class MainController
 			{
 				foreach ($ref_schema['select'] as $a => $b)
 				{
-					$select .= ", $b AS `{$a}`";
+					$select .= ", $b AS {$a}";
 				}
 			}
 			
-			$sql = "SELECT $select FROM `{$parent}` WHERE `{$fkey}` = ?";
+			$sql = "SELECT $select FROM {$parent} WHERE {$fkey} = ?";
 			
       $stmt = MainDb::query($sql, array($parent_id));
 			$this->data[$i][$parent] = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -353,15 +359,16 @@ class MainController
 		}
 		
 		foreach($data as $k => $v) {
-			$insert .= "`{$k}`, ";
+			$insert .= "{$k}, ";
 			$values[":{$k}"] = $v;
 		}
 		
 		$insert = rtrim($insert, ', ');
 		$val = implode(', ', array_keys($values));
-		$sql = "INSERT INTO `{$this->table}` ({$insert}) VALUES ({$val})";
 		
-		return MainDb::query($sql, $values);
+		$this->sql_insert = sprintf($this->sql_insert, $this->table, $insert, $val);
+		
+		return MainDb::query($this->sql_insert, $values);
 		
 	}
 	
@@ -385,9 +392,9 @@ class MainController
 		}
 		
     $data = array(":{$key}" => $value);
-		$sql = "DELETE FROM `{$this->table}` WHERE `{$key}` = :{$key} $limit";
+		$this->sql = "DELETE FROM {$this->table} WHERE {$key} = :{$key} $limit";
     
-		return MainDb::query($sql, $data);
+		return MainDb::query($this->sql, $data);
 		
 	}
 	
@@ -415,14 +422,14 @@ class MainController
     }
     
     foreach ($data as $k => $v) {
-      $query .= "`$k` = :$k, ";
+      $query .= "$k = :$k, ";
       $values[':'.$k] = $v;
     }
     
     $query = rtrim($query, ', ');
-    $sql = "UPDATE `{$this->table}` SET $query WHERE `$col` = :$col";
+    $this->sql = sprintf('UPDATE %s SET %s WHERE %s = :%s', $this->table, $query, $col, $col);
     
-    return MainDb::query($sql, $values);
+    return MainDb::query($this->sql, $values);
     
   }
 	

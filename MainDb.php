@@ -59,7 +59,8 @@ class MainDb
 		  }
 		
     }
-  
+    
+    self::$instance->setAttribute(PDO::ATTR_ORACLE_NULLS, PDO::NULL_EMPTY_STRING);
     return self::$instance;
   
   }
@@ -108,25 +109,27 @@ class MainDb
       $pdo = self::getInstance();
       $stmt = $pdo->prepare($sql);
       
-      if (!$stmt) {
+      if( !$stmt ) {
         list($ec, $dec, $emsg) = $pdo->errorInfo();
         $error = $emsg ."\n" . print_r(debug_backtrace(), TRUE);
         return MainApp::error($error);
       }
       
-      $result = $stmt->execute($data);
+      $result = $stmt->execute( $data );
       
-      if (!$result) {
+      if( !$result ) {
         list($ec, $dec, $emsg) = $pdo->errorInfo();
         $error = $emsg ."\n" . print_r(debug_backtrace(), TRUE);
         return MainApp::error($error);
       }
     
     }
-    catch (PDOException $e) {
-        $error = $e->getMessage() . $sql;
-        $error .= "\n" . print_r(debug_backtrace(), TRUE);
-        return MainApp::error($error);
+    catch( PDOException $e ) {
+      
+      $error = $e->getMessage() . $sql;
+      $error .= "\n" . print_r(debug_backtrace(), TRUE);
+      return MainApp::error( $error );
+    
     }
     
     // DELETE statements should report number of rows deleted
@@ -149,15 +152,15 @@ class MainDb
       return $stmt;
     }
     
-    if (empty($data[':id'])) {
-      $data[':id'] = $pdo->lastInsertId();
+    if( empty( $data[':id'] )) {
+      $data[':id'] = $pdo->lastInsertId('order_id_seq');
     }
     
     $out = array();
     
     // Always strip ":" prefixes from input array keys
-    foreach ($data as $k => $v) {
-      $key = ltrim($k, ':');
+    foreach( $data as $k => $v ) {
+      $key = ltrim( $k, ':' );
       $out[$key] = $v;
     }
     
@@ -185,7 +188,7 @@ class MainDb
   // count something
   public static function total($table)
   {
-    $sql = 'SELECT COUNT(*) AS the_count FROM `%s`';
+    $sql = 'SELECT COUNT(*) AS the_count FROM %s';
     $res = self::fetch(sprintf($sql, $table));
     $res = current($res);
     return $res['the_count'];
