@@ -81,7 +81,7 @@ class MainDb
   ////
   // execute an SQL query
   // @return mixed
-  public static function query($sql, $data = NULL)
+  public static function query($sql, $data = NULL, $seq_id = NULL)
 	{
 	  $args = func_get_args();
 	  $sql = array_shift($args);
@@ -153,7 +153,7 @@ class MainDb
     }
     
     if( empty( $data[':id'] )) {
-      $data[':id'] = $pdo->lastInsertId('order_id_seq');
+      $data[':id'] = $pdo->lastInsertId( $seq_id );
     }
     
     $out = array();

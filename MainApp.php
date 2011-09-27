@@ -37,22 +37,25 @@ class MainApp
 		// dispatch requested controller
 		$controller = self::classname($controller);
 		$c = new $controller;
-//    var_dump($c);
+    
+    // try to determine passed argument
+    $a = (empty($_POST) && !empty($action)) ? $param : $_POST;
+    
 		// assume no method name was given, try $param
 		// URL format is always controller/param/action
 		if (method_exists($c, $action)) {
-			return $c->$action($_POST);
+			return $c->$action($a);
 		}
 		
 		// controller/action
 		if (method_exists($c, $param)) {
-			return $c->$param($_POST);
+			return $c->$param($a);
 		}
 		
 		// ...then fall back to defaultAction
 		if (method_exists($c, $c->defaultAction)) {
 			$action = $c->defaultAction;
-			return $c->$action($_POST);
+			return $c->$action($a);
 		}
 		
 		// don't know what to do, giving up...

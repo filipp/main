@@ -367,8 +367,9 @@ class MainController
 		$val = implode(', ', array_keys($values));
 		
 		$this->sql_insert = sprintf($this->sql_insert, $this->table, $insert, $val);
-		
-		return MainDb::query($this->sql_insert, $values);
+		$seq_id = sprintf( '%s_id_seq', strtolower(get_called_class()) );
+    
+		return MainDb::query( $this->sql_insert, $values, $seq_id );
 		
 	}
 	
